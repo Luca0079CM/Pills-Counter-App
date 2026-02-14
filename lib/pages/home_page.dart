@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _invTextCtrl = TextEditingController();
 
   int _formValue = 1;
-  bool _paramBusy = false;
+  final bool _paramBusy = false;
 
   final List<String> _log = [];
   int _activeTerm = 1;
@@ -191,10 +191,10 @@ class _HomePageState extends State<HomePage> {
                 height: 90,
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    shape: MaterialStateProperty.all(
+                    shape: WidgetStateProperty.all(
                         const StadiumBorder()),
                     backgroundColor:
-                    MaterialStateProperty.all(
+                    WidgetStateProperty.all(
                         const Color(0xFF9B111E)),
                   ),
                   onPressed: _onStart,
