@@ -1,13 +1,15 @@
 ﻿// 
-// vers.2.5
-// 
-// 
+// vers.2.8sx
+//
+//
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 //===============================================
@@ -54,6 +56,35 @@ class _MyHomePageState extends State<MyHomePage> {
   // 0 = Connessione, 1 = Home, 2 = Config
   int _pageIndex = 0;
 
+  // numero pagine (Link / Home / Config)
+  static const int _pagesCount = 3;
+
+  late final PageController _pageCtrl;
+
+  void _goToPage(int i) {
+    // clamp + evita rebuild inutili
+    if (i < 0) i = 0;
+    if (i > _pagesCount - 1) i = _pagesCount - 1;
+    if (i == _pageIndex) return;
+
+    // animazione cambio pagina
+    _pageCtrl.animateToPage(
+      i,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+    );
+
+    setState(() => _pageIndex = i);
+  }
+
+
+  // EXP: mostra/nasconde funzioni avanzate (default: false)
+  bool _expMode = false;
+
+  // di DEFAULT  6 Canali
+  bool _6ChMode = true;
+
+
   // Wi-Fi TCP
   bool _useWifi = true;  //false;
   Socket? _wifiSock;
@@ -64,7 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final Map<int, StreamSubscription<List<int>>> _termSubs = {};
   int? _activeTerm; // terminal attivo (1,2,3)
 
-  final _hostCtrl = TextEditingController(text: '192.168.1.1');
+  final _hostCtrl = TextEditingController(text: '192.168.1.101');
   final _portCtrl = TextEditingController(text: '5000');
 
   bool get _isConnected => _useWifi ? (_wifiSock != null) : false;
@@ -72,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // Parametri
   final _pezziCtrl = TextEditingController();
   final _SE_OFFCtrl = TextEditingController();
-  int _canValue = 6; // 1,2,3,6
+  int _canValue = 3; // 1,2,3,6
   int _formValue = 1; // 1=PERLE, 2=NORMALE, 3=XMINI
   final _SE_ONCtrl = TextEditingController();
   final _vibCamCtrl = TextEditingController();
@@ -114,7 +145,10 @@ class _MyHomePageState extends State<MyHomePage> {
     _lastStartOk = true;
     _unita = 0;
 
+    _pageCtrl = PageController(initialPage: _pageIndex);
+
     super.initState();
+    loadSettings();
   }
 
 //===========================
@@ -135,107 +169,184 @@ class _MyHomePageState extends State<MyHomePage> {
     _vibTazCtrl.dispose();
     _ritChCtrl.dispose();
     _invTextCtrl.dispose();
+    _pageCtrl.dispose();
     super.dispose();
   }
 
 
 // Ritorna true x permettere l'uscita, false per bloccarla
 //===============================================
-Future<bool> _onBackPressed() async {
-  if (!mounted) return true;
+  bool _exitInProgress = false;
 
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      
-      backgroundColor:  const Color(0xFFEEEEEE), // grigio chiaro  const Color(0xFF7F0E18) , // grigio chiaro
+  Future<bool> _confirmExitDialog() async {
+    if (!mounted) return false;
 
-      title: const Text('CHIUDERE APP ?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('No'),
+    final res = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (ctx) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
+        backgroundColor: const Color(0xFF2B2B2B),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.exit_to_app, color: Colors.white70, size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Uscire dall’app?',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Vuoi davvero uscire?',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('No'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4A4A4A),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Sì'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Sì'),
-        ),
-      ],
-    ),
-  );
-                                //quiesce
-  if (ok == true) {
-    // Chiudi app
-    if (Platform.isAndroid) {
+      ),
+    );
+
+    return res ?? false;
+  }
+
+
+/////////////////////////////////////////////////////
+  Future<void> _performExit() async {
+    if (_exitInProgress) return; // anti doppia chiamata
+    _exitInProgress = true;
 
     try {
       await _onDisMPressed();
       await _disconnect();
     } catch (_) {}
-    SystemNavigator.pop();   // metodo "pulito" per Android
+
+    if (Platform.isAndroid) {
+      SystemNavigator.pop();
     } else {
-      exit(0); // fallback per altri casi
+      exit(0);
     }
-    return true;
   }
-  return false;
-}
 
-
- // Snack helper
+  // Snack helper
 
   // Menu 3 puntini (overflow) handler
-Future<void> _onMenuSelected(String value) async {
-  if (value == 'exit') {
-    // Riusa la stessa logica del back (chiusura pulita)
-    await _onBackPressed();
-    return;
-  }
-
-  // Voce TIMER: apre un dialog per scegliere 0..9
-  if (value == 'timer') {
-    final v = await _pickTimerDialog(context, initial: _timer);
-    if (v != null) {
-      setState(() {
-        _timer = v;
-        _menuSelected = 'Timer: $v';
-      });
+  Future<void> _onMenuSelected(String value) async {
+    if (value == 'exit') {
+      final ok = await _confirmExitDialog();
+      if (ok) await _performExit();
+      return;
     }
-    return;
+
+    // Toggle EXP (funzioni avanzate)
+    if (value == 'exp') {
+      setState(() { _expMode = !_expMode; });
+      saveSettings();
+      return;
+    }
+
+    // Toggle 6Ch (funzioni avanzate)
+    if (value == '6Ch') {
+      setState(() { _6ChMode = !_6ChMode; });
+      saveSettings();
+      return;
+    }
+
+    // Voce TIMER: apre un dialog per scegliere 0..9
+    if (value == 'timer') {
+      final v = await _pickTimerDialog(context, initial: _timer);
+      if (v != null) {
+        setState(() {
+          _timer = v;
+          _menuSelected = 'Timer: $v';
+        });
+      }
+      return;
+    }
+
+    // Gestisci selezioni AUX rimanenti
+    setState(() {
+      _menuSelected = value;
+    });
+
+    // Esempio di reazione ad una voce AUX
+    if (value == 'aux3') {
+      await _sendAscii('TtT');
+    }
   }
 
-  // Gestisci selezioni AUX rimanenti
-  setState(() {
-    _menuSelected = value;
-  });
-
-  // Esempio di reazione ad una voce AUX
-  if (value == 'aux3') {
-    await _sendAscii('TtT');
+  Future<int?> _pickTimerDialog(BuildContext context, {required int initial}) {
+    return showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Auto-Start(0–9 sec.)'),
+        children: List.generate(10, (i) {
+          final isSel = i == initial;
+          return SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, i),
+            child: Row(
+              children: [
+                if (isSel) const Icon(Icons.check, size: 16),
+                if (isSel) const SizedBox(width: 6),
+                Text(i == 0 ? '0 ( – NO Auto)' : '$i sec.'),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
   }
-}
-
-Future<int?> _pickTimerDialog(BuildContext context, {required int initial}) {
-  return showDialog<int>(
-    context: context,
-    builder: (ctx) => SimpleDialog(
-      title: const Text('Timer (0–9 secondi)'),
-      children: List.generate(10, (i) {
-        final isSel = i == initial;
-        return SimpleDialogOption(
-          onPressed: () => Navigator.pop(ctx, i),
-          child: Row(
-            children: [
-              if (isSel) const Icon(Icons.check, size: 16),
-              if (isSel) const SizedBox(width: 6),
-              Text(i == 0 ? '0 (default – no auto)' : '$i secondi'),
-            ],
-          ),
-        );
-      }),
-    ),
-  );
-}
 //===============================================
 
   void _showSnack(String m) {
@@ -256,8 +367,8 @@ Future<int?> _pickTimerDialog(BuildContext context, {required int initial}) {
 
 // LINK-ON / LINK-OFF
 //===============================================
-Future<void> _connect() async {
-    
+  Future<void> _connect() async {
+
     if (_useWifi) {
       // Multiterminal connect: base from Host/IP, then .101, .102, .103
       final host = _hostCtrl.text.trim();
@@ -309,7 +420,7 @@ Future<void> _connect() async {
 
       return;
     }
-    
+
 
   }
 
@@ -317,7 +428,7 @@ Future<void> _connect() async {
 //===============================================
 // DISCONNETTE    wifi
 //===============================================
-Future<void> _disconnect() async {
+  Future<void> _disconnect() async {
 
 
     // Chiudi tutte le connessioni WiFi multiple
@@ -330,7 +441,7 @@ Future<void> _disconnect() async {
     _termSubs.clear();
     _termSocks.clear();
     _activeTerm = null;
-    
+
     try {
       await _sendAscii('<');
       await Future.delayed(const Duration(milliseconds: 60));
@@ -352,11 +463,11 @@ Future<void> _disconnect() async {
 //===============================================
 // TX Testi ASCII
 //===============================================
-Future<void> _sendAscii(String s) async {
-     if (!_isConnected) {
-       _showSnack('Non connesso');
-       return;
-     }
+  Future<void> _sendAscii(String s) async {
+    if (!_isConnected) {
+      _showSnack('Non connesso');
+      return;
+    }
     try {
       if (_useWifi) {
         _wifiSock!.add(ascii.encode(s));   //EX utf8.encode(s));
@@ -395,7 +506,7 @@ Future<void> _sendAscii(String s) async {
     while (true) {
       final text = _rxBuffer.toString();
       final i = text.indexOf('*');
-     if (i < 0) break;
+      if (i < 0) break;
       final frame = text.substring(0, i);
 
 
@@ -408,7 +519,7 @@ Future<void> _sendAscii(String s) async {
         _rxBuffer.write(text.substring(i + 1)); // avanza oltre '*'
         continue; // ora davvero scartato
       }
-  
+
       if (frame.startsWith('A') || frame.startsWith('X')) {
         _parseStartResult(frame);
       } else {
@@ -451,10 +562,30 @@ Future<void> _sendAscii(String s) async {
 //      return;
 //    }
 
+
+
+//////////////////////////////////////////////////////
+  Future<void> saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('exp_mode', _expMode);
+    await prefs.setBool('six_channels', _6ChMode);
+  }
+
+//////////////////////////////////////////////////////
+  Future<void> loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      _expMode = prefs.getBool('exp_mode') ?? false;
+      _6ChMode = prefs.getBool('six_channels') ?? true;
+    });
+  }
+
 //===============================================
 //*********** ESTRAE PARAMETRI CANALI ***********
 //===============================================
-void _parseStartResult(String frame) {
+  void _parseStartResult(String frame) {
     if (frame.isEmpty) return;
     final ok = frame.startsWith('A');
     final s = frame;
@@ -465,42 +596,66 @@ void _parseStartResult(String frame) {
       return int.tryParse(s.substring(a, b));
     }
 
-     final c1 = safeChar(1);
-     final c2 = safeChar(2);
-     final c3 = safeChar(3);
-     final c4 = safeChar(4);
-     final c5 = safeChar(5);
-     final c6 = safeChar(6);
-     final unita = safeNum(7, 10);
+    final c1 = safeChar(1);
+    final c2 = safeChar(2);
+    final c3 = safeChar(3);
+    final c4 = safeChar(4);
+    final c5 = safeChar(5);
+    final c6 = safeChar(6);
+    final unita = safeNum(7, 10);
 
     setState(() {
       _lastStartFrame = s;
       _lastStartOk = ok;
       if (s.length >= 10) {
-      _c1 = c1; _c2 = c2; _c3 = c3; _c4 = c4; _c5 = c5; _c6 = c6;
-       }
+        _c1 = c1; _c2 = c2; _c3 = c3; _c4 = c4; _c5 = c5; _c6 = c6;
+      }
       _unita = unita ?? _unita;
     });
 // Auto-riavvio se attivo e TIMER > 0
-if (_autoLoop && _timer > 0) {
-  _autoRestartTimer?.cancel();
-  _startDelaySignal();
-  _autoRestartTimer = Timer(Duration(seconds: _timer), () {
-    if (!mounted) return;
-    if (!_autoLoop) return;     // auto fermato dall'utente
-    if (!_isConnected) return;  // connessione persa
-    _stopDelaySignal();
+    if (_autoLoop && _timer > 0) {
+      _autoRestartTimer?.cancel();
+      _startDelaySignal();
+      _autoRestartTimer = Timer(Duration(seconds: _timer), () {
+        if (!mounted) return;
+        if (!_autoLoop) return;     // auto fermato dall'utente
+        if (!_isConnected) return;  // connessione persa
+        _stopDelaySignal();
 
-    _sendAscii('S');            // riparte come se avessi premuto START
-    setState(() => _startSent = true);
-    _startTimer?.cancel();
-    _startTimer = Timer(const Duration(seconds: 1), () {
-      if (mounted) setState(() => _startSent = false);
-    });
-  });
-}
+        _sendAscii('S');            // riparte come se avessi premuto START
+        setState(() => _startSent = true);
+        _startTimer?.cancel();
+        _startTimer = Timer(const Duration(seconds: 1), () {
+          if (mounted) setState(() => _startSent = false);
+        });
+      });
+    }
   }
 
+
+
+  //=========================================================
+  // Beep forte per AUTO-START (scansione secondi in ritardo)
+  // Usa suono di sistema (notification) tramite ringtone.
+  //=========================================================
+  Future<void> _playAutoTickBeep() async {
+    try {
+      // evita sovrapposizioni se il device allunga il suono
+      FlutterRingtonePlayer().stop();
+      FlutterRingtonePlayer().play(
+        android: AndroidSounds.notification,
+        ios: IosSounds.glass,
+        looping: false,
+        volume: 1.0,
+        // asAlarm=true = canale più "forte" su molti device
+        asAlarm: true,
+      );
+      return;
+    } catch (_) {
+      // fallback compatibile (più debole)
+      try { await SystemSound.play(SystemSoundType.click); } catch (_) {}
+    }
+  }
 
 //======================================================================
 // Segnale durante il ritardo prima dell'auto-riavvio (lampeggio + suono)
@@ -511,21 +666,13 @@ if (_autoLoop && _timer > 0) {
     _delayBlinkOn = true;
     _delaySignalTimer = Timer.periodic(const Duration(seconds: 1), (t) async {
       if (!mounted) return;
-      // Suono a ritmo di 1 secondo (alcuni device non riproducono "alert")
-      try {
-        // Prova 1: click (più compatibile su Android)
-        await SystemSound.play(SystemSoundType.click);
-      } catch (_) {
-        // ignora
-      }
-      // Fallback: feedback aptico (non sostituisce il suono ma dà conferma)
-      try {
-        HapticFeedback.selectionClick();
-      } catch (_) {
-        // ignora
-      }
+      // Beep a ritmo di 1 secondo
+      await _playAutoTickBeep();
+
+      // Lampeggio pallino
       setState(() => _delayBlinkOn = !_delayBlinkOn);
     });
+
   }
 
   void _stopDelaySignal() {
@@ -538,24 +685,44 @@ if (_autoLoop && _timer > 0) {
     });
   }
 //===============================================
-//****** ESTRAE PARAMETRI INIZIALI **************  
+//****** ESTRAE PARAMETRI INIZIALI **************
 //===============================================
-void _parseAndFill(String frame) {
+  void _parseAndFill(String frame) {
     int? p(String s) => int.tryParse(s.trim());
 
-    final frameSan = frame.replaceAll('>', '').replaceAll('<', '');
-//    final frameSan = frame;
-// >0901091092095094093*
+    // Al primo collegamento può arrivare un carattere spurio PRIMA del '>' (es: '\u00FF>...*').
+    // Se si fa parsing "a posizioni fisse" partendo da index 0, tutto si sfalsa di 1.
+    //
+    // Regola: il carattere '>' è il marker che indica l'inizio del payload parametri.
+    // Quindi: prendo SOLO ciò che sta DOPO il primo '>' e PRIMA dell'eventuale '*'.
+    String payload = frame;
 
-    final pezzi = p(_safeSub(frameSan, 0, 3));
-    final form = p(_safeSub(frameSan, 3, 4));
-    final vibC = p(_safeSub(frameSan, 4, 7));
-    final vibT = p(_safeSub(frameSan, 7, 10));
-    final ritch = p(_safeSub(frameSan, 10, 13));
-    final SE_ON = p(_safeSub(frameSan, 13, 16));
-    final SE_OFF = p(_safeSub(frameSan, 16, 19));
+    final int gt = payload.indexOf('>');
+    if (gt >= 0) {
+      payload = payload.substring(gt + 1);
+    }
 
+    final int star = payload.indexOf('*');
+    if (star >= 0) {
+      payload = payload.substring(0, star);
+    }
 
+    // Per sicurezza elimino eventuali '<' e qualunque carattere non numerico
+    payload = payload.replaceAll('<', '');
+    payload = payload.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Servono almeno 19 cifre per i campi usati qui
+    if (payload.length < 19) return;
+
+    // Esempio payload (senza '*'): 0901091092095094093...
+
+    final pezzi = p(_safeSub(payload, 0, 3));
+    final form = p(_safeSub(payload, 3, 4));
+    final vibC = p(_safeSub(payload, 4, 7));
+    final vibT = p(_safeSub(payload, 7, 10));
+    final ritch = p(_safeSub(payload, 10, 13));
+    final SE_ON = p(_safeSub(payload, 13, 16));
+    final SE_OFF = p(_safeSub(payload, 16, 19));
 
     setState(() {
       if (pezzi != null) _pezziCtrl.text = pezzi.toString();
@@ -572,10 +739,10 @@ void _parseAndFill(String frame) {
 // CON_M / DIS_M    LINK-ON / LINK-OFF
 //===========================================
   Future<void> _toggleConMode() async {
-     if (!_isConnected) {
-       _showSnack('Non connesso');
-       return;
-     }
+    if (!_isConnected) {
+      _showSnack('Non connesso');
+      return;
+    }
     if (_conMode) {
       await _onDisMPressed();
     } else {
@@ -583,34 +750,34 @@ void _parseAndFill(String frame) {
     }
   }
 
-  
+
 //===============================================
 //**** LINK-OFF ** PROCEDURA DI DIS_MACCHINA ****
 //===============================================
-Future<void> _onDisMPressed() async {
-  try {
-    if (_isConnected) {
-      for (int i = 0; i < 2; i++) {
-        await _sendAscii('<');
-        await Future.delayed(const Duration(milliseconds: 60));
+  Future<void> _onDisMPressed() async {
+    try {
+      if (_isConnected) {
+        for (int i = 0; i < 2; i++) {
+          await _sendAscii('<');
+          await Future.delayed(const Duration(milliseconds: 60));
+        }
       }
-     }
-  } catch (_) {}
-  _stopConMode();
-}
+    } catch (_) {}
+    _stopConMode();
+  }
 
 //===============================================
 //*** LINK-ON ** PROCEDURA DI CONNES_MACCHINA ***
 //===============================================
-void _startConMode() {
+  void _startConMode() {
     _pollTimer?.cancel();
     _conMode = true;
     _waitingProbe = true;
     _pollTimer = Timer.periodic(const Duration(milliseconds: 300), (_) {
-       if (!_isConnected) {
-         _stopConMode();
-         return;
-       }
+      if (!_isConnected) {
+        _stopConMode();
+        return;
+      }
       if (_waitingProbe) _sendAscii('>');
     });
     setState(() {});
@@ -634,172 +801,193 @@ void _startConMode() {
 //===============================================
 // START CONTEGGIO
 //===============================================
-void _onStart() {
-   if (!_isConnected) {
-     _showSnack('Non connesso');
-     return;
-   }
+  void _onStart() {
+    if (!_isConnected) {
+      _showSnack('Non connesso');
+      return;
+    }
 
-   // TIMER == 0 -> comportamento originale (singolo ciclo)
-   if (_timer == 0) {
-     _sendAscii('S');
-     setState(() => _startSent = true);
-     _startTimer?.cancel();
-     _startTimer = Timer(const Duration(seconds: 1), () {
-       if (mounted) setState(() => _startSent = false);
-     });
-     return;
-   }
+    // TIMER == 0 -> comportamento originale (singolo ciclo)
+    if (_timer == 0) {
+      _sendAscii('S');
+      setState(() => _startSent = true);
+      _startTimer?.cancel();
+      _startTimer = Timer(const Duration(seconds: 1), () {
+        if (mounted) setState(() => _startSent = false);
+      });
+      return;
+    }
 
-   // TIMER > 0 -> START diventa toggle per l'auto-loop
-   if (_autoLoop) {
-     // Fermiamo il loop automatico
-     _autoLoop = false;
-     _autoRestartTimer?.cancel();
-     _stopDelaySignal();
-     _showSnack('Auto-START fermato');
-     setState(() => _startSent = false);
-     return;
-   } else {
-     // Avviamo il loop automatico e mandiamo subito il primo START
-     _autoLoop = true;
-     _sendAscii('S');
-     setState(() => _startSent = true);
-     _startTimer?.cancel();
-     _startTimer = Timer(const Duration(seconds: 1), () {
-       if (mounted) setState(() => _startSent = false);
-     });
-   }
-}
+    // TIMER > 0 -> START diventa toggle per l'auto-loop
+    if (_autoLoop) {
+      // Fermiamo il loop automatico
+      _autoLoop = false;
+      _autoRestartTimer?.cancel();
+      _stopDelaySignal();
+      _showSnack('Auto-START fermato');
+      setState(() => _startSent = false);
+      return;
+    } else {
+      // Avviamo il loop automatico e mandiamo subito il primo START
+      _autoLoop = true;
+      _sendAscii('S');
+      setState(() => _startSent = true);
+      _startTimer?.cancel();
+      _startTimer = Timer(const Duration(seconds: 1), () {
+        if (mounted) setState(() => _startSent = false);
+      });
+    }
+  }
 
 
 
-@override
+  @override
 //===============================================
 
-Widget build(BuildContext context) {
-  return PopScope(
-    canPop: false,
-    onPopInvokedWithResult: (didPop, result) async {
-      if (didPop) return;
-      final ok = await _onBackPressed();
-      if (ok && context.mounted) Navigator.of(context).maybePop(result);
-    },
-    child: Scaffold(
-      backgroundColor: const Color(0xFFE0F2F1),
-      appBar: AppBar(
-        // Cambia il colore di background in base a _isConnected
-        backgroundColor: _isConnected ? const Color(0xFF4CAF50) : const Color(0xFF9E9E9E),
-        foregroundColor: Colors.white,
-        
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              // Cambia il gradiente in base a _isConnected
-              colors: _isConnected
-                  ? [Color(0xFF0D47A1), Color(0xFF4CAF50)]  // Blu e verde
-                  : [Color(0xFF0D47A1), Color(0xFF9E9E9E)],  // Blu e grigio
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final ok = await _confirmExitDialog();
+        if (ok) {
+          await _performExit();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFE0F2F1),
+        appBar: AppBar(
+          // Cambia il colore di background in base a _isConnected
+          backgroundColor: _isConnected ? const Color(0xFF4CAF50) : const Color(0xFF9E9E9E),
+          foregroundColor: Colors.white,
+
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                // Cambia il gradiente in base a _isConnected
+                colors: _isConnected
+                    ? [Color(0xFF0D47A1), Color(0xFF4CAF50)]  // Blu e verde
+                    : [Color(0xFF0D47A1), Color(0xFF9E9E9E)],  // Blu e grigio
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
             ),
           ),
-        ),
 
 
-        title: Text(_pageIndex == 0
-            ? 'CPE-VIB - Vers.2.5'
-            : _pageIndex == 1
-                ? 'CPE-VIB - Home'
-                : 'CPE-VIB - Config.'),
-        actions: [
-          // Pallino rosso (Home): visibile quando TIMER != 0; lampeggia + beep durante il ritardo auto-riavvio
-          if (_pageIndex == 1 && _timer != 0)
+          title: Text(_pageIndex == 0
+              ? 'CPE-VIB - Vers.2.8sx'
+              : _pageIndex == 1
+              ? 'CPE-VIB - Home'
+              : 'CPE-VIB - Config.'),
+          actions: [
+            // Pallino rosso (Home): visibile quando TIMER != 0; lampeggia + beep durante il ritardo auto-riavvio
+            if (_pageIndex == 1 && _timer != 0)
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 250),
+                  opacity: (_inAutoDelay && !_delayBlinkOn) ? 0.15 : 1.0,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+            PopupMenuButton<String>(
+              tooltip: 'Menu',
+              onSelected: _onMenuSelected,
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 'timer', child: Text('AUTO-START (Timer)')),
+//              const PopupMenuItem(value: 'aux2', child: Text('aux2')),
+//              const PopupMenuItem(value: 'aux3', child: Text('aux3')),
+//              const PopupMenuItem(value: 'aux4', child: Text('aux4')),
+//              const PopupMenuItem(value: 'aux5', child: Text('aux5')),
+//              const PopupMenuItem(value: 'aux6', child: Text('aux6')),
+//              const PopupMenuItem(value: 'aux7', child: Text('aux7')),
+//              const PopupMenuItem(value: 'aux8', child: Text('aux8')),
+                const PopupMenuDivider(),
+
+
+                CheckedPopupMenuItem(
+                  value: '6Ch',
+                  checked: _6ChMode,
+                  child: const Text('6Ch (Visualizza)'),
+                ),
+                const PopupMenuDivider(),
+
+
+                CheckedPopupMenuItem(
+                  value: 'exp',
+                  checked: _expMode,
+                  child: const Text('EXP (funzioni avanzate)'),
+                ),
+                const PopupMenuDivider(),
+
+
+                PopupMenuItem(
+                  value: 'exit',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.exit_to_app),
+                      SizedBox(width: 8),
+                      Text('Esci da APP'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // Puoi aggiungere azioni qui se necessario
+
             Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 250),
-                opacity: (_inAutoDelay && !_delayBlinkOn) ? 0.15 : 1.0,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
+              padding: const EdgeInsets.only(right: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _activeTerm != null ? 'T${_activeTerm}' : '--',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
             ),
-          PopupMenuButton<String>(
-            tooltip: 'Menu',
-            onSelected: _onMenuSelected,
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'timer', child: Text('Timer')),
-              const PopupMenuItem(value: 'aux2', child: Text('aux2')),
-              const PopupMenuItem(value: 'aux3', child: Text('aux3')),
-              const PopupMenuItem(value: 'aux4', child: Text('aux4')),
-              const PopupMenuItem(value: 'aux5', child: Text('aux5')),
-              const PopupMenuItem(value: 'aux6', child: Text('aux6')),
-              const PopupMenuItem(value: 'aux7', child: Text('aux7')),
-              const PopupMenuItem(value: 'aux8', child: Text('aux8')),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                value: 'exit',
-                child: Row(
-                  children: const [
-                    Icon(Icons.exit_to_app),
-                    SizedBox(width: 8),
-                    Text('Esci'),
-                  ],
-                ),
-              ),
+          ],
+        ),
+        body: SafeArea(
+          child: PageView(
+            controller: _pageCtrl,
+            onPageChanged: (i) => setState(() => _pageIndex = i),
+            children: [
+              _buildPageConn(), // 0
+              _buildHome(), // 1
+              _buildConfigPage(), // 2
             ],
           ),
-    
-          // Puoi aggiungere azioni qui se necessario
-
-	    Padding(
-	      padding: const EdgeInsets.only(right: 12),
-	      child: Container(
-	        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-	        decoration: BoxDecoration(
-	          color: Colors.black26,
-	          borderRadius: BorderRadius.circular(12),
-	        ),
-	        child: Text(
-        	  _activeTerm != null ? 'T${_activeTerm}' : '--',
-	          style: const TextStyle(
-        	    color: Colors.white,
-	            fontWeight: FontWeight.bold,
-        	    fontSize: 16,
-	            letterSpacing: 0.5,
-	          ),
-	        ),
-	      ),
-	    ),
-	  ],
-      ),
-      body: SafeArea(
-        child: IndexedStack(
-          index: _pageIndex,
-          children: [
-            _buildPageConn(), // 0
-            _buildHome(), // 1
-            _buildConfigPage(), // 2
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _pageIndex,
+          onDestinationSelected: (i) => _goToPage(i),
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.link), label: 'Link'),
+            NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+            NavigationDestination(icon: Icon(Icons.tune), label: 'Config'),
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _pageIndex,
-        onDestinationSelected: (i) => setState(() => _pageIndex = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.link), label: 'Link'),
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.tune), label: 'Config'),
-        ],
-      ),
-    ),
-  );
-}
+    );
+  }
 
 //===============================================
 // Pagina 1 (Connessione)
@@ -826,22 +1014,22 @@ Widget build(BuildContext context) {
                       ),
                     ),
                   ),
-                //TL  const SizedBox(height: 6),
-                //TL  const Text('CPE-VIB',
-                //TL      style:
-                //TL          TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  //TL  const SizedBox(height: 6),
+                  //TL  const Text('CPE-VIB',
+                  //TL      style:
+                  //TL          TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 12),
 
-          _termChoiceChips(),			//SELETTORE TERMINALE ATTIVO
+          if (_expMode) _termChoiceChips(),			//SELETTORE TERMINALE ATTIVO (EXP)
 
 //ff          _transportSelectorCard(),    //SELETTORE WIFI
 
-          const SizedBox(height: 12),
-          _useWifi ? _wifiConfigCard() : _wifiConfigCard(),
+          if (_expMode) const SizedBox(height: 12),
+          if (_expMode) (_useWifi ? _wifiConfigCard() : _wifiConfigCard()),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -851,10 +1039,10 @@ Widget build(BuildContext context) {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                           _isConnected ? const Color(0xFF4CAF50) : const Color(0xFF9E9E9E),
+                      _isConnected ? const Color(0xFF4CAF50) : const Color(0xFF9E9E9E),
                       foregroundColor: Colors.white,
                     ),
-                     onPressed: _isConnected ? _disconnect : _connect,
+                    onPressed: _isConnected ? _disconnect : _connect,
                     child: Text( _isConnected ? 'WiFi-ON' : 'WiFi-OFF',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
@@ -874,7 +1062,7 @@ Widget build(BuildContext context) {
     );
   }
 //-------------------------------------------------------------------------------------
-  
+
 
 //************************************************************************
 // SELEZIONE  BLUETHOOT / WIFI
@@ -918,7 +1106,7 @@ Widget build(BuildContext context) {
                     decoration: const InputDecoration(
                       labelText: 'Host / IP',
                       filled: true,
-                      hintText: '192.168.1.1 o sxlink-xxxx.local',
+                      hintText: '192.168.1.101 o sxlink-xxxx.local',
                     ),
                   ),
                 ),
@@ -972,72 +1160,72 @@ Widget build(BuildContext context) {
               const Expanded(child: SizedBox.shrink()),
               Transform.translate(offset: const Offset(0, -24), child: Column(children: [
 // Pezzi + SE_OFF
-              Row(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor: 0.66,
-                        child: _numField('Pezzi', _pezziCtrl, 1, 999),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: 0.66,
+                          child: _numField('Pezzi', _pezziCtrl, 1, 999),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: _onImpostaPressed,
-                      child: const Text('IMPOSTA'),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: _onImpostaPressed,
+                        child: const Text('IMPOSTA'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // CON_M e START tondo
-              // CON_M e START tondo
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // CON_M e START tondo
+                // CON_M e START tondo
 
 //ff              _termChoiceChips(),		// SCELTA TERMINALE ATTIVO
 
-              const SizedBox(height: 8),
-Row(
-  children: [
-    Expanded(
-      child: SizedBox(
-        height: 44,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _conMode ? Colors.yellow : const Color(0xFF455A64),
-            foregroundColor: _conMode ? Colors.black : Colors.white,
-          ),
-          onPressed: _toggleConMode,
-          child: Text(_conMode ? 'LINK-ON' : 'LINK-OFF'),
-        ),
-      ),
-    ),
-    const SizedBox(width: 8),
-    SizedBox(
-      width: 192,
-      height: 96,
-      child: ElevatedButton(
-        style: ButtonStyle(
-          shape: WidgetStateProperty.all(const StadiumBorder()),
-          fixedSize: WidgetStateProperty.all(const Size(192, 96)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _conMode ? Colors.yellow : const Color(0xFF455A64),
+                            foregroundColor: _conMode ? Colors.black : Colors.white,
+                          ),
+                          onPressed: _toggleConMode,
+                          child: Text(_conMode ? 'LINK-ON' : 'LINK-OFF'),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 192,
+                      height: 96,
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                          shape: WidgetStateProperty.all(const StadiumBorder()),
+                          fixedSize: WidgetStateProperty.all(const Size(192, 96)),
 
-          backgroundColor: WidgetStateProperty.resolveWith<Color?>(
-            (states) => states.contains(WidgetState.pressed) ? Colors.yellow  : const Color(0xFF9B111E), //EX : Colors.red,
-          ),
-          foregroundColor: WidgetStateProperty.all(Colors.white),
-        ),
-        onPressed: _onStart,
-        child: const Text('START', textAlign: TextAlign.center),
-      ),
-    ),
-  ],
-),
-              const SizedBox(height: 16),
-              
-            ])),// PARAM in fondo
+                          backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+                                (states) => states.contains(WidgetState.pressed) ? Colors.yellow  : const Color(0xFF9B111E), //EX : Colors.red,
+                          ),
+                          foregroundColor: WidgetStateProperty.all(Colors.white),
+                        ),
+                        onPressed: _onStart,
+                        child: const Text('START', textAlign: TextAlign.center),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+              ])),// PARAM in fondo
               SizedBox.shrink(),
             ],
           ),
@@ -1070,56 +1258,60 @@ Row(
               _numField('%Vib_C', _vibCamCtrl, 1, 100),
               _numField('%Vib_T', _vibTazCtrl, 1, 100),
               _dropdownForm(),
-//              _dropdownCan(),
-              _numField('SE_OFF', _SE_OFFCtrl, 1, 255),
-              _numField('SE_ON', _SE_ONCtrl, 1, 255),
-              _numField('RitCH', _ritChCtrl, 1, 255),               //AGGIUNTO 
+//quix              _dropdownCan(),
+
+              if (_expMode) _numField('SE_OFF', _SE_OFFCtrl, 1, 255),
+              if (_expMode) _numField('SE_ON', _SE_ONCtrl, 1, 255),
+
+
+              _numField('RitCH', _ritChCtrl, 1, 255),               //AGGIUNTO
               _BUTT_Config2(),
               _BUTT_Config1(),
             ],
           ),
           const SizedBox(height: 68),					// SPAZIO TRA PARAMETRI E TESTO DA INVIARE
 
-          _termChoiceChips(),				// SCELTA TERMINALE ATTIVO
+          if (_expMode) _termChoiceChips(),				// SCELTA TERMINALE ATTIVO
 
-          const SizedBox(height: 8),
+          if (_expMode) const SizedBox(height: 8),
 
 //*****************************************************************************
 //   SCOMMENTARE X INVIO TESTO
 //*****************************************************************************
-          Row(
-            children: [
-              Expanded(
-                flex: 5,
-                child: TextField(
-                  controller: _invTextCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Testo da inviare',
-                    filled: true,
-                  ),
-                  onSubmitted: (_) async { await _sendAscii(_invTextCtrl.text); _invTextCtrl.clear(); },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 3,
-                child: SizedBox(
-                  height: 40,
-                  child: ElevatedButton(
-                    onPressed: () async { await _sendAscii(_invTextCtrl.text); _invTextCtrl.clear(); },
-                    child: const Text('INV-C'),
+          if (_expMode)
+            Row(
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: TextField(
+                    controller: _invTextCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Testo da inviare',
+                      filled: true,
+                    ),
+                    onSubmitted: (_) async { await _sendAscii(_invTextCtrl.text); _invTextCtrl.clear(); },
                   ),
                 ),
-              ),
-            ],
-         ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: () async { await _sendAscii(_invTextCtrl.text); _invTextCtrl.clear(); },
+                      child: const Text('INV-C'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
 //*****************************************************************************
 //   SCOMMENTARE X INVIO TESTO
 //*****************************************************************************
 
 
-          const SizedBox(height: 8),
-          _logView(),
+          if (_expMode) const SizedBox(height: 8),
+          if (_expMode) _logView(),
           const SizedBox(height: 12),
           SizedBox.shrink(),
         ],
@@ -1150,7 +1342,7 @@ Row(
 
 
 //===============================================
-  
+
 
 //===============================================
 
@@ -1174,14 +1366,14 @@ Row(
   }
 
 
- // --- CONFIG sequence: ParamTX ---
+  // --- CONFIG sequence: ParamTX ---
 //===============================================
-  
+
   bool _validateRanges() {
     final pezzi = int.tryParse(_pezziCtrl.text) ?? -1;
     if (pezzi < 1 || pezzi > 999) { _showError('Pezzi deve essere 1..999'); return false; }
 
-   //ex   if (![1,2,3,6].contains(_SE_OFFValue)) { _showError('SE_OFF deve essere 1, 2, 3 o 6'); return false; }
+    //ex   if (![1,2,3,6].contains(_SE_OFFValue)) { _showError('SE_OFF deve essere 1, 2, 3 o 6'); return false; }
 
     if (!([1,2,3].contains(_formValue))) { _showError('Form deve essere 1..3'); return false; }
 
@@ -1221,7 +1413,7 @@ Row(
 //===============================================
 // TRASMETTE I PARAMETRI IN SEQ.
 //===============================================
-Future<void> _paramTX1() async {
+  Future<void> _paramTX1() async {
     if (!_validateRanges()) return;
 
     _awaitingStart = false;
@@ -1232,46 +1424,66 @@ Future<void> _paramTX1() async {
     // Step 1: C -> A -> send Pezzi(3) + Can(1) -> expect echo -> wait 0.5s
     final pezzi = int.tryParse(_pezziCtrl.text) ?? 0;
     final pezzi3 = pezzi.clamp(1, 999).toString().padLeft(3, '0');
-//    final can1 = (_canValue ?? 1).toString();
-//    okAll = okAll && 
-await _TX_Com(pezzi3 + 'P');
+    // okAll = okAll &&
+    await _TX_Com(pezzi3 + 'P');
 
-    // Step 2: C -> A -> send '00' + Form + 'F'
-    final form1 = _formValue.toString();
-//    okAll = okAll && 
-await _TX_Com('00' + form1 + 'F');
 
-    // Step 3: C -> A -> send  SE_ON + 'Y'
-    final SE_ON = int.tryParse(_SE_ONCtrl.text) ?? 0;
-    final SE_ON1 = SE_ON.clamp(0, 255).toString().padLeft(3, '0');
-//    okAll = okAll && 
-await _TX_Com(SE_ON1 + 'Y');
+// Se modalità EXP
+//-------------------
+    if (_expMode)  {
 
-    // Step 3: C -> A -> send  SE_OFF + 'N'
-    final SE_OFF = int.tryParse(_SE_OFFCtrl.text) ?? 0;
-    final SE_OFF1 = SE_OFF.clamp(0, 255).toString().padLeft(3, '0');
-//    okAll = okAll && 
-await _TX_Com(SE_OFF1 + 'N');
+      // Step 2: C -> A -> send '00' + Form + 'F'
+      final form1 = _formValue.toString();
+      // okAll = okAll &&
+      await _TX_Com('00' + form1 + 'F');
+
+      // Step 3: C -> A -> send  SE_ON + 'Y'
+      final SE_ON = int.tryParse(_SE_ONCtrl.text) ?? 0;
+      final SE_ON1 = SE_ON.clamp(0, 255).toString().padLeft(3, '0');
+      // okAll = okAll &&
+      await _TX_Com(SE_ON1 + 'Y');
+
+      // Step 3: C -> A -> send  SE_OFF + 'N'
+      final SE_OFF = int.tryParse(_SE_OFFCtrl.text) ?? 0;
+      final SE_OFF1 = SE_OFF.clamp(0, 255).toString().padLeft(3, '0');
+      // okAll = okAll &&
+      await _TX_Com(SE_OFF1 + 'N');
+
+    } else {
+
+      // Step 2: C -> A -> send '00' + Form + 'F'
+      final form1 = _formValue.toString();
+      // okAll = okAll &&
+      await _TX_Com('00' + form1 + 'F');
+
+    }
+//endif
+
 
 
     // Step 4: C -> A -> send Vib Can + 'V'
     final vibC = int.tryParse(_vibCamCtrl.text) ?? 0;
     final vibCtxt = vibC.clamp(1, 100).toString().padLeft(3, '0');
-//    okAll = okAll && 
-await _TX_Com(vibCtxt + 'V');
+    // okAll = okAll &&
+    await _TX_Com(vibCtxt + 'V');
 
     // Step 5: C -> A -> send Vib Taz + 'T'
     final vibT = int.tryParse(_vibTazCtrl.text) ?? 0;
     final vibTtxt = vibT.clamp(1, 100).toString().padLeft(3, '0');
-//    okAll = okAll && 
-await _TX_Com(vibTtxt + 'T');
+    // okAll = okAll &&
+    await _TX_Com(vibTtxt + 'T');
 
 //    // Step 6: C -> A -> send RitCH + 'R'
 //    final rit = int.tryParse(_ritChCtrl.text) ?? 0;
 //    final ritTxt = rit.clamp(1, 255).toString().padLeft(3, '0');
-// //    okAll = okAll && 
-//await _TX_Com(ritTxt + 'R');
-  
+//    // okAll = okAll &&
+//    await _TX_Com(ritTxt + 'R');
+
+
+// aggiorna
+//---------------------
+    await _sendAscii('i');
+
     if (!okAll) {
       xERROR = true;
       if (mounted) {
@@ -1286,7 +1498,7 @@ await _TX_Com(vibTtxt + 'T');
     }
 
     if (mounted) setState(() { _paramBusy = false; });
-}
+  }
 
 
 
@@ -1294,7 +1506,7 @@ await _TX_Com(vibTtxt + 'T');
 //===============================================
 // TRASMETTE I PARAMETRI IN SEQ.
 //===============================================
-Future<void> _paramTX2() async {
+  Future<void> _paramTX2() async {
     if (!_validateRanges()) return;
 
     _awaitingStart = false;
@@ -1306,9 +1518,9 @@ Future<void> _paramTX2() async {
     // Step 6: C -> A -> send RitCH + 'R'
     final rit = int.tryParse(_ritChCtrl.text) ?? 0;
     final ritTxt = rit.clamp(1, 255).toString().padLeft(3, '0');
-//    okAll = okAll && 
-await _TX_Com(ritTxt + 'R');
-  
+    // okAll = okAll &&
+    await _TX_Com(ritTxt + 'R');
+
     if (!okAll) {
       xERROR = true;
       if (mounted) {
@@ -1323,41 +1535,41 @@ await _TX_Com(ritTxt + 'R');
     }
 
     if (mounted) setState(() { _paramBusy = false; });
-}
+  }
 
 
 //************************************************************************
-//************************************************************************  
-Widget _BUTT_Config1() {
-  return Row(
-    children: [
-      const Spacer(), // spinge il bottone a destra
-      SizedBox(
-        height: 40,
-        width: 100, // larghezza fissa
+//************************************************************************
+  Widget _BUTT_Config1() {
+    return Row(
+      children: [
+        const Spacer(), // spinge il bottone a destra
+        SizedBox(
+          height: 40,
+          width: 100, // larghezza fissa
           child: ElevatedButton(
-         // style: ElevatedButton.styleFrom(foregroundColor: Colors.green, backgroundColor: Colors.red.shade100),
+            // style: ElevatedButton.styleFrom(foregroundColor: Colors.green, backgroundColor: Colors.red.shade100),
 
-          onPressed: _paramBusy ? null : _paramTX1,
-          child: _paramBusy
-            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-            : const Text('SET_All'),
+            onPressed: _paramBusy ? null : _paramTX1,
+            child: _paramBusy
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('SET'),
+          ),
         ),
-      ),
-      const SizedBox(width: 18), // spazio sotto il CONFIG
-    ],
-  );
-}
+        const SizedBox(width: 18), // spazio sotto il CONFIG
+      ],
+    );
+  }
 
 //************************************************************************
-//************************************************************************  
-Widget _BUTT_Config2() {
-  return Row(
-    children: [
-      const Spacer(), // spinge il bottone a destra
-      SizedBox(
-        height: 40,
-        width: 100, // larghezza fissa
+//************************************************************************
+  Widget _BUTT_Config2() {
+    return Row(
+      children: [
+        const Spacer(), // spinge il bottone a destra
+        SizedBox(
+          height: 40,
+          width: 100, // larghezza fissa
 
 
 //    Positioned(
@@ -1365,19 +1577,19 @@ Widget _BUTT_Config2() {
 //      top:  80,  // Y
 
           child: ElevatedButton(
-          style: ElevatedButton.styleFrom(foregroundColor: Colors.black, backgroundColor: Colors.red.shade200),
+            style: ElevatedButton.styleFrom(foregroundColor: Colors.black, backgroundColor: Colors.red.shade200),
 
-          onPressed: _paramBusy ? null : _paramTX2,
-          child: _paramBusy
-            ? const SizedBox(width: 18, height: 18 )
-            : const Text('SET_Rit'),
+            onPressed: _paramBusy ? null : _paramTX2,
+            child: _paramBusy
+                ? const SizedBox(width: 18, height: 18 )
+                : const Text('SET_Rit'),
+          ),
+
         ),
-     
-      ),
-      const SizedBox(width: 18),  // spazio sotto il CONFIG
-    ],
-  );
-}
+        const SizedBox(width: 18),  // spazio sotto il CONFIG
+      ],
+    );
+  }
 
 
 
@@ -1385,8 +1597,8 @@ Widget _BUTT_Config2() {
 
 
 //===============================================
-  
-Future<bool> _TX_Com(String payload) async {
+
+  Future<bool> _TX_Com(String payload) async {
     try {
       await _sendAscii('C');
       final ok1 = await _waitImpostaAck(const Duration(milliseconds: 1500));
@@ -1448,45 +1660,73 @@ Future<bool> _TX_Com(String payload) async {
 //===============================================
 //  VIS CPS CANALI
 //===============================================
-Widget _capsuleView() {
-  final show6 = (_canValue == 6);
-  final values = [_c1, _c2, _c3, _c4, _c5, _c6];
-  final toShow = show6 ? values : values.take(3).toList();
+  Widget _capsuleView() {
 
-  Widget pill(String txt) {
-    return Container(
-      width: 43,
-      height: 96,
-      alignment: Alignment.center,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF5F5F5), Color(0xFFE0E0E0)],
+
+    _canValue = 3;
+
+    if (_6ChMode) {
+      _canValue = 6;
+    }
+
+    final show6 = (_canValue == 6);
+    final values = [_c1, _c2, _c3, _c4, _c5, _c6];
+    final toShow = show6 ? values : values.take(3).toList();
+
+    Widget pill(String txt) {
+      return Container(
+        width: 43,
+        height: 96,
+        alignment: Alignment.center,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF5F5F5), Color(0xFFE0E0E0)],
+          ),
+          border: Border.all(color: Color(0xFFBDBDBD)),
+          boxShadow: const [
+            BoxShadow(color: Colors.white70, offset: Offset(-2, -2), blurRadius: 4, spreadRadius: 1),
+            BoxShadow(color: Colors.black26, offset: Offset(3, 3), blurRadius: 6, spreadRadius: 1),
+          ],
         ),
-        border: Border.all(color: Color(0xFFBDBDBD)),
-        boxShadow: const [
-          BoxShadow(color: Colors.white70, offset: Offset(-2, -2), blurRadius: 4, spreadRadius: 1),
-          BoxShadow(color: Colors.black26, offset: Offset(3, 3), blurRadius: 6, spreadRadius: 1),
-        ],
-      ),
-      child: Text(txt, textAlign: TextAlign.center, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-    );
-  }
+        child: Text(txt, textAlign: TextAlign.center, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+      );
+    }
 
-  return Padding(
-    padding: const EdgeInsets.only(top: 19),
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+
+
+
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 19),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: toShow.map((c) => pill(c)).toList(),
       ),
-    ),
-  );
-}
+    );
+
+  }
+
+
+
+
+
+
+
+//  return Padding(
+//    padding: const EdgeInsets.only(top: 19),
+//    child: SingleChildScrollView(
+//      scrollDirection: Axis.horizontal,
+//      child: Row(
+//        mainAxisAlignment: MainAxisAlignment.center,
+//        children: toShow.map((c) => pill(c)).toList(),
+//      ),
+//    ),
+//  );
+//}
 
 
 
@@ -1538,7 +1778,7 @@ Widget _capsuleView() {
 
 //===============================================
 
-void _setActiveTerm(int n) {
+  void _setActiveTerm(int n) {
     setState(() {
       _activeTerm = n;
       if (_useWifi) {
@@ -1554,7 +1794,7 @@ void _setActiveTerm(int n) {
   }
 
 //===============================================
-Widget _numField(String label, TextEditingController ctrl, int min, int max) {
+  Widget _numField(String label, TextEditingController ctrl, int min, int max) {
     return TextField(
       controller: ctrl,
       keyboardType: TextInputType.number,
@@ -1626,10 +1866,10 @@ Widget _numField(String label, TextEditingController ctrl, int min, int max) {
       child: _log.isEmpty
           ? const Text('Log vuoto...', style: TextStyle(color: Colors.black54))
           : ListView.builder(
-              reverse: true,
-              itemCount: _log.length,
-              itemBuilder: (_, i) => Text(_log[i]),
-            ),
+        reverse: true,
+        itemCount: _log.length,
+        itemBuilder: (_, i) => Text(_log[i]),
+      ),
     );
   }
 //-----------------------------------------------------------------
