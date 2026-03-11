@@ -13,20 +13,41 @@ class CapsuleView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final toShow = showSix ? values : values.take(3).toList();
+    final toShow = showSix ? values.take(6).toList() : values.take(3).toList();
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final total = toShow.length;
-        final spacing = total >= 6 ? 10.0 : 14.0;
-        final availableWidth = constraints.maxWidth;
-        final pillWidth =
-        ((availableWidth - ((total - 1) * spacing)) / total).clamp(42.0, 70.0);
+        final width = constraints.maxWidth;
+
+        // Dimensioni più compatte e stabili, così 6 canali stanno dentro
+        // e 3 canali restano centrati senza sembrare enormi.
+        double pillWidth;
+        double spacing;
+        double fontSize;
+
+        if (width < 360) {
+          pillWidth = 40;
+          spacing = 8;
+          fontSize = 22;
+        } else if (width < 390) {
+          pillWidth = 43;
+          spacing = 9;
+          fontSize = 23;
+        } else if (width < 430) {
+          pillWidth = 46;
+          spacing = 10;
+          fontSize = 24;
+        } else {
+          pillWidth = 50;
+          spacing = 12;
+          fontSize = 25;
+        }
 
         Widget pill(String txt) {
           return Container(
             width: pillWidth,
-            height: pillWidth * 2.1,
+            height: pillWidth * 1.95,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
               gradient: const LinearGradient(
@@ -38,16 +59,16 @@ class CapsuleView extends StatelessWidget {
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x16000000),
-                  blurRadius: 14,
-                  offset: Offset(0, 8),
+                  blurRadius: 12,
+                  offset: Offset(0, 6),
                 ),
               ],
             ),
-            alignment: Alignment.center,
             child: Text(
               txt.isEmpty ? '-' : txt,
-              style: const TextStyle(
-                fontSize: 26,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: fontSize,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
@@ -55,13 +76,17 @@ class CapsuleView extends StatelessWidget {
           );
         }
 
-        return Wrap(
-          alignment: WrapAlignment.center,
-          spacing: spacing,
-          runSpacing: 12,
-          children: [
-            for (final value in toShow) pill(value),
-          ],
+        return Center(
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            runAlignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: spacing,
+            runSpacing: 10,
+            children: [
+              for (final value in toShow) pill(value),
+            ],
+          ),
         );
       },
     );

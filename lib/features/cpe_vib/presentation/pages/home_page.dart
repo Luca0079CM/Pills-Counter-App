@@ -70,26 +70,22 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: AppSectionHeader(
-                          title: 'Canali capsule',
-                          subtitle: state.settings.sixChannelsMode
-                              ? 'Visualizzazione 6 canali'
-                              : 'Visualizzazione 3 canali',
-                          icon: Icons.view_module,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      _ChannelsToggle(
-                        isSixChannels: state.settings.sixChannelsMode,
-                        onChanged: (_) => controller.toggleSixChannelsMode(),
-                      ),
-                    ],
+                  AppSectionHeader(
+                    title: 'Canali capsule',
+                    subtitle: state.settings.sixChannelsMode
+                        ? 'Visualizzazione 6 canali'
+                        : 'Visualizzazione 3 canali',
+                    icon: Icons.view_module,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _ChannelsToggle(
+                      isSixChannels: state.settings.sixChannelsMode,
+                      onChanged: (_) => controller.toggleSixChannelsMode(),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
                   CapsuleView(
                     values: state.params.capsules,
                     showSix: state.settings.sixChannelsMode,
@@ -284,12 +280,13 @@ class _ChannelsToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 430;
+
     Widget segment({
       required bool selected,
       required String label,
       required IconData icon,
       required VoidCallback onTap,
-      bool compact = false,
     }) {
       return Expanded(
         child: AnimatedContainer(
@@ -315,8 +312,8 @@ class _ChannelsToggle extends StatelessWidget {
               onTap: onTap,
               child: Padding(
                 padding: EdgeInsets.symmetric(
-                  horizontal: compact ? 10 : 12,
-                  vertical: compact ? 10 : 12,
+                  horizontal: compact ? 12 : 14,
+                  vertical: compact ? 11 : 12,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -324,17 +321,15 @@ class _ChannelsToggle extends StatelessWidget {
                     Icon(
                       icon,
                       size: compact ? 16 : 18,
-                      color: selected
-                          ? Colors.white
-                          : AppColors.textSecondary,
+                      color:
+                      selected ? Colors.white : AppColors.textSecondary,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       label,
                       style: TextStyle(
-                        color: selected
-                            ? Colors.white
-                            : AppColors.textSecondary,
+                        color:
+                        selected ? Colors.white : AppColors.textSecondary,
                         fontWeight: FontWeight.w800,
                         fontSize: compact ? 12 : 13,
                         letterSpacing: 0.2,
@@ -349,47 +344,39 @@ class _ChannelsToggle extends StatelessWidget {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = MediaQuery.sizeOf(context).width < 430;
-
-        return Container(
-          constraints: BoxConstraints(
-            minWidth: compact ? 150 : 170,
-            maxWidth: compact ? 180 : 210,
+    return Container(
+      constraints: BoxConstraints(
+        minWidth: compact ? 170 : 190,
+        maxWidth: compact ? 210 : 230,
+      ),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F6F8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          segment(
+            selected: !isSixChannels,
+            label: '3 CH',
+            icon: Icons.view_week_outlined,
+            onTap: () {
+              if (isSixChannels) onChanged(false);
+            },
           ),
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF4F6F8),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border),
+          const SizedBox(width: 4),
+          segment(
+            selected: isSixChannels,
+            label: '6 CH',
+            icon: Icons.grid_view_rounded,
+            onTap: () {
+              if (!isSixChannels) onChanged(true);
+            },
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              segment(
-                selected: !isSixChannels,
-                label: '3 CH',
-                icon: Icons.view_week_outlined,
-                compact: compact,
-                onTap: () {
-                  if (isSixChannels) onChanged(false);
-                },
-              ),
-              const SizedBox(width: 4),
-              segment(
-                selected: isSixChannels,
-                label: '6 CH',
-                icon: Icons.grid_view_rounded,
-                compact: compact,
-                onTap: () {
-                  if (!isSixChannels) onChanged(true);
-                },
-              ),
-            ],
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
