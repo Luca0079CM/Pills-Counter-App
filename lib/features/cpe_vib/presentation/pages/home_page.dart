@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import '../controllers/cpe_vib_controller.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import '../widgets/capsule_view.dart';
 import '../widgets/numeric_input_field.dart';
 import '../widgets/start_result_banner.dart';
 import '../widgets/unit_banner.dart';
+import '../widgets/common/app_page_padding.dart';
+import '../widgets/common/app_primary_button.dart';
+import '../widgets/common/app_secondary_button.dart';
+import '../widgets/common/app_section_card.dart';
+import '../widgets/common/app_section_header.dart';
+import '../widgets/common/app_status_chip.dart';
 
 class HomePage extends StatelessWidget {
   final CpeVibController controller;
@@ -19,125 +27,365 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = controller.state;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 64,
+    return SingleChildScrollView(
+      child: AppPagePadding(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 430;
+
+                if (compact) {
+                  return Column(
+                    children: [
+                      StartResultBanner(
+                        ok: state.startResult.ok,
+                        pezzi: state.params.pezzi,
+                      ),
+                      const SizedBox(height: 12),
+                      UnitBanner(unita: state.unita),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(
                       child: StartResultBanner(
                         ok: state.startResult.ok,
                         pezzi: state.params.pezzi,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: SizedBox(
-                      height: 64,
+                    const SizedBox(width: 12),
+                    Expanded(
                       child: UnitBanner(unita: state.unita),
                     ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.section),
+            AppSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: AppSectionHeader(
+                          title: 'Canali capsule',
+                          subtitle: state.settings.sixChannelsMode
+                              ? 'Visualizzazione 6 canali'
+                              : 'Visualizzazione 3 canali',
+                          icon: Icons.view_module,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _ChannelsToggle(
+                        isSixChannels: state.settings.sixChannelsMode,
+                        onChanged: (_) => controller.toggleSixChannelsMode(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  CapsuleView(
+                    values: state.params.capsules,
+                    showSix: state.settings.sixChannelsMode,
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              CapsuleView(
-                values: state.params.capsules,
-                showSix: state.settings.sixChannelsMode,
+            ),
+            const SizedBox(height: AppSpacing.section),
+            AppSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AppSectionHeader(
+                    title: 'Impostazione rapida',
+                    subtitle: 'Configura il numero pezzi da conteggiare',
+                    icon: Icons.tune,
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 430;
+
+                      if (compact) {
+                        return Column(
+                          children: [
+                            NumericInputField(
+                              label: 'Pezzi',
+                              controller: pezziController,
+                            ),
+                            const SizedBox(height: 12),
+                            AppSecondaryButton(
+                              label: 'Imposta',
+                              icon: Icons.check,
+                              onPressed: controller.onImpostaPressed,
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: NumericInputField(
+                              label: 'Pezzi',
+                              controller: pezziController,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AppSecondaryButton(
+                              label: 'Imposta',
+                              icon: Icons.check,
+                              onPressed: controller.onImpostaPressed,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              const Expanded(child: SizedBox.shrink()),
-              Transform.translate(
-                offset: const Offset(0, -24),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: FractionallySizedBox(
-                              widthFactor: 0.66,
-                              child: NumericInputField(
-                                label: 'Pezzi',
-                                controller: pezziController,
-                              ),
-                            ),
-                          ),
+            ),
+            const SizedBox(height: AppSpacing.section),
+            AppSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AppSectionHeader(
+                    title: 'Comandi macchina',
+                    subtitle: 'Gestione collegamento e avvio conteggio',
+                    icon: Icons.play_circle_outline,
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      AppStatusChip(
+                        label: state.isConMode ? 'LINK-ON' : 'LINK-OFF',
+                        backgroundColor: state.isConMode
+                            ? const Color(0xFFFFF8E1)
+                            : const Color(0xFFEAF1F6),
+                        foregroundColor: state.isConMode
+                            ? const Color(0xFF8A6D1F)
+                            : AppColors.neutral,
+                        icon: state.isConMode ? Icons.link : Icons.link_off,
+                      ),
+                      if (state.timer != 0)
+                        AppStatusChip(
+                          label: state.isAutoLoop
+                              ? 'AUTO-START attivo (${state.timer}s)'
+                              : 'AUTO-START ${state.timer}s',
+                          backgroundColor: const Color(0xFFFFEBEE),
+                          foregroundColor: AppColors.danger,
+                          icon: Icons.timer,
                         ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          height: 44,
-                          child: ElevatedButton(
-                            onPressed: controller.onImpostaPressed,
-                            child: const Text('IMPOSTA'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 44,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: state.isConMode
-                                    ? Colors.yellow
-                                    : const Color(0xFF455A64),
-                                foregroundColor: state.isConMode
-                                    ? Colors.black
-                                    : Colors.white,
-                              ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 430;
+
+                      if (compact) {
+                        return Column(
+                          children: [
+                            AppSecondaryButton(
+                              label:
+                              state.isConMode ? 'Disattiva Link' : 'Attiva Link',
+                              icon: state.isConMode
+                                  ? Icons.link_off
+                                  : Icons.link,
                               onPressed: controller.toggleConMode,
-                              child: Text(
-                                state.isConMode ? 'LINK-ON' : 'LINK-OFF',
-                              ),
+                              backgroundColor: state.isConMode
+                                  ? const Color(0xFFFFF8E1)
+                                  : const Color(0xFFE8EEF5),
+                              foregroundColor: state.isConMode
+                                  ? const Color(0xFF8A6D1F)
+                                  : AppColors.neutral,
+                            ),
+                            const SizedBox(height: 12),
+                            AppPrimaryButton(
+                              label: state.timer > 0 && state.isAutoLoop
+                                  ? 'STOP AUTO-START'
+                                  : 'START',
+                              icon: state.timer > 0 && state.isAutoLoop
+                                  ? Icons.pause_circle
+                                  : Icons.play_arrow,
+                              onPressed: controller.onStart,
+                              height: 58,
+                              backgroundColor: AppColors.danger,
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: AppSecondaryButton(
+                              label:
+                              state.isConMode ? 'Disattiva Link' : 'Attiva Link',
+                              icon: state.isConMode
+                                  ? Icons.link_off
+                                  : Icons.link,
+                              onPressed: controller.toggleConMode,
+                              backgroundColor: state.isConMode
+                                  ? const Color(0xFFFFF8E1)
+                                  : const Color(0xFFE8EEF5),
+                              foregroundColor: state.isConMode
+                                  ? const Color(0xFF8A6D1F)
+                                  : AppColors.neutral,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 192,
-                          height: 96,
-                          child: ElevatedButton(
-                            style: ButtonStyle(
-                              shape: WidgetStateProperty.all(
-                                const StadiumBorder(),
-                              ),
-                              fixedSize: WidgetStateProperty.all(
-                                const Size(192, 96),
-                              ),
-                              backgroundColor:
-                              WidgetStateProperty.resolveWith<Color?>(
-                                    (states) => states.contains(WidgetState.pressed)
-                                    ? Colors.yellow
-                                    : const Color(0xFF9B111E),
-                              ),
-                              foregroundColor:
-                              WidgetStateProperty.all(Colors.white),
-                            ),
-                            onPressed: controller.onStart,
-                            child: const Text(
-                              'START',
-                              textAlign: TextAlign.center,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AppPrimaryButton(
+                              label: state.timer > 0 && state.isAutoLoop
+                                  ? 'STOP AUTO-START'
+                                  : 'START',
+                              icon: state.timer > 0 && state.isAutoLoop
+                                  ? Icons.pause_circle
+                                  : Icons.play_arrow,
+                              onPressed: controller.onStart,
+                              height: 54,
+                              backgroundColor: AppColors.danger,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChannelsToggle extends StatelessWidget {
+  final bool isSixChannels;
+  final ValueChanged<bool> onChanged;
+
+  const _ChannelsToggle({
+    required this.isSixChannels,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget segment({
+      required bool selected,
+      required String label,
+      required IconData icon,
+      required VoidCallback onTap,
+      bool compact = false,
+    }) {
+      return Expanded(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: selected
+                ? const [
+              BoxShadow(
+                color: Color(0x220D47A1),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ]
+                : null,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: onTap,
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 10 : 12,
+                  vertical: compact ? 10 : 12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icon,
+                      size: compact ? 16 : 18,
+                      color: selected
+                          ? Colors.white
+                          : AppColors.textSecondary,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: selected
+                            ? Colors.white
+                            : AppColors.textSecondary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: compact ? 12 : 13,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = MediaQuery.sizeOf(context).width < 430;
+
+        return Container(
+          constraints: BoxConstraints(
+            minWidth: compact ? 150 : 170,
+            maxWidth: compact ? 180 : 210,
+          ),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F6F8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              segment(
+                selected: !isSixChannels,
+                label: '3 CH',
+                icon: Icons.view_week_outlined,
+                compact: compact,
+                onTap: () {
+                  if (isSixChannels) onChanged(false);
+                },
+              ),
+              const SizedBox(width: 4),
+              segment(
+                selected: isSixChannels,
+                label: '6 CH',
+                icon: Icons.grid_view_rounded,
+                compact: compact,
+                onTap: () {
+                  if (!isSixChannels) onChanged(true);
+                },
+              ),
             ],
           ),
         );

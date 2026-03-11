@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../controllers/cpe_vib_controller.dart';
+import '../theme/app_colors.dart';
 import '../widgets/app_exit_dialog.dart';
 import 'config_page.dart';
 import 'connection_page.dart';
@@ -118,16 +119,6 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
       return;
     }
 
-    if (value == 'exp') {
-      await _controller.toggleExpMode();
-      return;
-    }
-
-    if (value == '6Ch') {
-      await _controller.toggleSixChannelsMode();
-      return;
-    }
-
     if (value == 'timer') {
       final selected = await _pickTimerDialog(
         context,
@@ -147,7 +138,7 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
     return showDialog<int>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Auto-Start(0–9 sec.)'),
+        title: const Text('Auto-Start (0–9 sec.)'),
         children: List.generate(10, (i) {
           final isSelected = i == initial;
           return SimpleDialogOption(
@@ -156,7 +147,7 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
               children: [
                 if (isSelected) const Icon(Icons.check, size: 16),
                 if (isSelected) const SizedBox(width: 6),
-                Text(i == 0 ? '0 ( – NO Auto)' : '$i sec.'),
+                Text(i == 0 ? '0 (No auto-start)' : '$i sec.'),
               ],
             ),
           );
@@ -197,6 +188,19 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
     }
   }
 
+  String _titleForPage(int pageIndex) {
+    switch (pageIndex) {
+      case 0:
+        return 'CPE-VIB • Collegamento';
+      case 1:
+        return 'CPE-VIB • Home';
+      case 2:
+        return 'CPE-VIB • Configurazione';
+      default:
+        return 'CPE-VIB';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -214,45 +218,39 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
             }
           },
           child: Scaffold(
-            backgroundColor: const Color(0xFFE0F2F1),
             appBar: AppBar(
               backgroundColor: state.isConnected
-                  ? const Color(0xFF4CAF50)
-                  : const Color(0xFF9E9E9E),
-              foregroundColor: Colors.white,
+                  ? AppColors.success
+                  : AppColors.primary,
               flexibleSpace: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: state.isConnected
-                        ? const [Color(0xFF0D47A1), Color(0xFF4CAF50)]
-                        : const [Color(0xFF0D47A1), Color(0xFF9E9E9E)],
+                        ? const [AppColors.primary, AppColors.success]
+                        : const [AppColors.primaryDark, AppColors.primary],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
                 ),
               ),
-              title: Text(
-                state.pageIndex == 0
-                    ? 'CPE-VIB - Vers.2.8sx'
-                    : state.pageIndex == 1
-                    ? 'CPE-VIB - Home'
-                    : 'CPE-VIB - Config.',
-              ),
+              title: Text(_titleForPage(state.pageIndex)),
               actions: [
                 if (state.pageIndex == 1 && state.timer != 0)
                   Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 250),
-                      opacity: (state.isInAutoDelay && !state.delayBlinkOn)
-                          ? 0.15
-                          : 1.0,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Center(
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 250),
+                        opacity: (state.isInAutoDelay && !state.delayBlinkOn)
+                            ? 0.2
+                            : 1.0,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
                     ),
@@ -264,18 +262,6 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
                     const PopupMenuItem(
                       value: 'timer',
                       child: Text('AUTO-START (Timer)'),
-                    ),
-                    const PopupMenuDivider(),
-                    CheckedPopupMenuItem(
-                      value: '6Ch',
-                      checked: state.settings.sixChannelsMode,
-                      child: const Text('6Ch (Visualizza)'),
-                    ),
-                    const PopupMenuDivider(),
-                    CheckedPopupMenuItem(
-                      value: 'exp',
-                      checked: state.settings.expMode,
-                      child: const Text('EXP (funzioni avanzate)'),
                     ),
                     const PopupMenuDivider(),
                     const PopupMenuItem(
@@ -292,24 +278,26 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black26,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      state.activeTerminal != null
-                          ? 'T${state.activeTerminal}'
-                          : '--',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        letterSpacing: 0.5,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        state.activeTerminal != null
+                            ? 'T${state.activeTerminal}'
+                            : '--',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          letterSpacing: 0.4,
+                        ),
                       ),
                     ),
                   ),
@@ -347,9 +335,21 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
               selectedIndex: state.pageIndex,
               onDestinationSelected: _goToPage,
               destinations: const [
-                NavigationDestination(icon: Icon(Icons.link), label: 'Link'),
-                NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-                NavigationDestination(icon: Icon(Icons.tune), label: 'Config'),
+                NavigationDestination(
+                  icon: Icon(Icons.link_outlined),
+                  selectedIcon: Icon(Icons.link),
+                  label: 'Link',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.tune_outlined),
+                  selectedIcon: Icon(Icons.tune),
+                  label: 'Config',
+                ),
               ],
             ),
           ),

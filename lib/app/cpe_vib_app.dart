@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../features/cpe_vib/presentation/pages/cpe_vib_shell_page.dart';
+import 'app_theme.dart';
 
 class CpeVibApp extends StatelessWidget {
   const CpeVibApp({super.key});
@@ -9,12 +10,7 @@ class CpeVibApp extends StatelessWidget {
     return MaterialApp(
       title: 'CPE-VIB Serial-BT',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0D47A1),
-        ),
-      ),
+      theme: AppTheme.light(),
       home: const CpeVibShellPage(),
     );
   }

@@ -11,19 +11,54 @@ class LogPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 120, maxHeight: 120),
-      padding: const EdgeInsets.all(8),
+      width: double.infinity,
+      constraints: const BoxConstraints(
+        minHeight: 150,
+        maxHeight: 220,
+      ),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFBDBDBD)),
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: logs.isEmpty
-          ? const Text('Log vuoto...', style: TextStyle(color: Colors.black54))
-          : ListView.builder(
-        reverse: true,
-        itemCount: logs.length,
-        itemBuilder: (_, i) => Text(logs[i]),
+          ? const Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          'Log vuoto...',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      )
+          : Scrollbar(
+        thumbVisibility: true,
+        child: ListView.separated(
+          padding: EdgeInsets.zero,
+          reverse: true,
+          itemCount: logs.length,
+          separatorBuilder: (_, __) =>
+          const Divider(color: Colors.white12, height: 12),
+          itemBuilder: (_, i) => Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: double.infinity,
+              child: Text(
+                logs[i],
+                softWrap: true,
+                overflow: TextOverflow.visible,
+                style: const TextStyle(
+                  color: Color(0xFFE5E7EB),
+                  fontSize: 13,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

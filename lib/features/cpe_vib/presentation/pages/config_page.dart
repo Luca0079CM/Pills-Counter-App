@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import '../controllers/cpe_vib_controller.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import '../widgets/log_panel.dart';
 import '../widgets/numeric_input_field.dart';
 import '../widgets/terminal_selector.dart';
+import '../widgets/common/app_page_padding.dart';
+import '../widgets/common/app_primary_button.dart';
+import '../widgets/common/app_secondary_button.dart';
+import '../widgets/common/app_section_card.dart';
+import '../widgets/common/app_section_header.dart';
 
 class ConfigPage extends StatelessWidget {
   final CpeVibController controller;
@@ -31,163 +38,232 @@ class ConfigPage extends StatelessWidget {
     final state = controller.state;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        children: [
-          const SizedBox(height: 8),
-          const SizedBox(height: 15),
-          GridView(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 1.8,
-            ),
-            children: [
-              NumericInputField(
-                label: 'Pezzi',
-                controller: pezziController,
-              ),
-              NumericInputField(
-                label: '%Vib_C',
-                controller: vibCamController,
-              ),
-              NumericInputField(
-                label: '%Vib_T',
-                controller: vibTazController,
-              ),
-              _buildFormDropdown(controller, state.params.formValue),
-              if (state.settings.expMode)
-                NumericInputField(
-                  label: 'SE_OFF',
-                  controller: seOffController,
-                ),
-              if (state.settings.expMode)
-                NumericInputField(
-                  label: 'SE_ON',
-                  controller: seOnController,
-                ),
-              NumericInputField(
-                label: 'RitCH',
-                controller: ritChController,
-                fillColor: Colors.red.shade200,
-              ),
-              _buildSetRitButton(controller, state.isParamBusy),
-              _buildSetButton(controller, state.isParamBusy),
-            ],
-          ),
-          const SizedBox(height: 68),
-          if (state.settings.expMode)
-            TerminalSelector(
-              activeTerminal: state.activeTerminal,
-              onSelected: controller.setActiveTerminal,
-            ),
-          if (state.settings.expMode) const SizedBox(height: 8),
-          if (state.settings.expMode)
-            Row(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: TextField(
-                    controller: outgoingTextController,
-                    decoration: const InputDecoration(
-                      labelText: 'Testo da inviare',
-                      filled: true,
-                    ),
-                    onChanged: controller.setOutgoingText,
-                    onSubmitted: (_) async {
-                      await controller.sendAscii(outgoingTextController.text);
-                      outgoingTextController.clear();
-                      controller.setOutgoingText('');
+      child: AppPagePadding(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AppSectionHeader(
+                    title: 'Parametri principali',
+                    subtitle: 'Configurazione operativa del conteggio',
+                    icon: Icons.settings,
+                  ),
+                  const SizedBox(height: 16),
+                  _ResponsiveFieldsGrid(
+                    children: [
+                      NumericInputField(
+                        label: 'Pezzi',
+                        controller: pezziController,
+                      ),
+                      NumericInputField(
+                        label: '%Vib_C',
+                        controller: vibCamController,
+                      ),
+                      NumericInputField(
+                        label: '%Vib_T',
+                        controller: vibTazController,
+                      ),
+                      _buildFormDropdown(controller, state.params.formValue),
+                      NumericInputField(
+                        label: 'RitCH',
+                        controller: ritChController,
+                        fillColor: const Color(0xFFFFE5E5),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 430;
+
+                      if (compact) {
+                        return Column(
+                          children: [
+                            AppPrimaryButton(
+                              label: 'Invia configurazione',
+                              icon: Icons.save,
+                              onPressed: state.isParamBusy
+                                  ? null
+                                  : controller.sendConfigSet1,
+                            ),
+                            const SizedBox(height: 12),
+                            AppSecondaryButton(
+                              label: 'Invia solo RitCH',
+                              icon: Icons.timer,
+                              onPressed: state.isParamBusy
+                                  ? null
+                                  : controller.sendConfigSetRit,
+                              backgroundColor: const Color(0xFFFFE5E5),
+                              foregroundColor: AppColors.danger,
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: AppPrimaryButton(
+                              label: 'Invia configurazione',
+                              icon: Icons.save,
+                              onPressed: state.isParamBusy
+                                  ? null
+                                  : controller.sendConfigSet1,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AppSecondaryButton(
+                              label: 'Invia solo RitCH',
+                              icon: Icons.timer,
+                              onPressed: state.isParamBusy
+                                  ? null
+                                  : controller.sendConfigSetRit,
+                              backgroundColor: const Color(0xFFFFE5E5),
+                              foregroundColor: AppColors.danger,
+                            ),
+                          ),
+                        ],
+                      );
                     },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 3,
-                  child: SizedBox(
-                    height: 40,
-                    child: ElevatedButton(
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.section),
+            AppSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AppSectionHeader(
+                    title: 'Modalità avanzata',
+                    subtitle: 'Abilita o disabilita le funzioni tecniche',
+                    icon: Icons.construction,
+                  ),
+                  const SizedBox(height: 16),
+                  SwitchListTile.adaptive(
+                    value: state.settings.expMode,
+                    onChanged: (_) => controller.toggleExpMode(),
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text(
+                      'Funzioni avanzate (EXP)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    subtitle: Text(
+                      state.settings.expMode
+                          ? 'Le opzioni avanzate sono visibili'
+                          : 'Le opzioni avanzate sono nascoste',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (state.settings.expMode) ...[
+              const SizedBox(height: AppSpacing.section),
+              AppSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const AppSectionHeader(
+                      title: 'Parametri avanzati',
+                      subtitle: 'Controlli tecnici ed esperti',
+                      icon: Icons.tune,
+                    ),
+                    const SizedBox(height: 16),
+                    _ResponsiveFieldsGrid(
+                      children: [
+                        NumericInputField(
+                          label: 'SE_OFF',
+                          controller: seOffController,
+                        ),
+                        NumericInputField(
+                          label: 'SE_ON',
+                          controller: seOnController,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Terminale attivo',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TerminalSelector(
+                      activeTerminal: state.activeTerminal,
+                      onSelected: controller.setActiveTerminal,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: outgoingTextController,
+                      onChanged: controller.setOutgoingText,
+                      decoration: const InputDecoration(
+                        labelText: 'Testo da inviare',
+                        hintText: 'Comando manuale ASCII',
+                      ),
+                      onSubmitted: (_) async {
+                        await controller.sendAscii(outgoingTextController.text);
+                        outgoingTextController.clear();
+                        controller.setOutgoingText('');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    AppSecondaryButton(
+                      label: 'Invia comando manuale',
+                      icon: Icons.send,
                       onPressed: () async {
                         await controller.sendAscii(outgoingTextController.text);
                         outgoingTextController.clear();
                         controller.setOutgoingText('');
                       },
-                      child: const Text('INV-C'),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          if (state.settings.expMode) const SizedBox(height: 8),
-          if (state.settings.expMode)
-            LogPanel(logs: state.logs),
-          const SizedBox(height: 12),
-          const SizedBox.shrink(),
-        ],
+              ),
+              const SizedBox(height: AppSpacing.section),
+              AppSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const AppSectionHeader(
+                      title: 'Log tecnico',
+                      subtitle: 'Tracce di debug della comunicazione',
+                      icon: Icons.terminal,
+                    ),
+                    const SizedBox(height: 16),
+                    LogPanel(logs: state.logs),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildSetButton(CpeVibController controller, bool busy) {
-    return Row(
-      children: [
-        const Spacer(),
-        SizedBox(
-          height: 40,
-          width: 100,
-          child: ElevatedButton(
-            onPressed: busy ? null : controller.sendConfigSet1,
-            child: busy
-                ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-                : const Text('SET'),
-          ),
-        ),
-        const SizedBox(width: 18),
-      ],
-    );
-  }
-
-  Widget _buildSetRitButton(CpeVibController controller, bool busy) {
-    return Row(
-      children: [
-        const Spacer(),
-        SizedBox(
-          height: 40,
-          width: 100,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black,
-              backgroundColor: Colors.red.shade200,
-            ),
-            onPressed: busy ? null : controller.sendConfigSetRit,
-            child: busy
-                ? const SizedBox(width: 18, height: 18)
-                : const Text('SET_Rit'),
-          ),
-        ),
-        const SizedBox(width: 18),
-      ],
     );
   }
 
   Widget _buildFormDropdown(CpeVibController controller, int value) {
     const items = [
-      DropdownMenuItem(value: 1, child: Text('1-PERLE')),
-      DropdownMenuItem(value: 2, child: Text('2-NORM')),
-      DropdownMenuItem(value: 3, child: Text('3-XMINI')),
+      DropdownMenuItem(value: 1, child: Text('1 - PERLE')),
+      DropdownMenuItem(value: 2, child: Text('2 - NORM')),
+      DropdownMenuItem(value: 3, child: Text('3 - XMINI')),
     ];
 
     final safeValue = [1, 2, 3].contains(value) ? value : 1;
 
     return InputDecorator(
-      decoration: const InputDecoration(labelText: 'Form', filled: true),
+      decoration: const InputDecoration(labelText: 'Form'),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           isExpanded: true,
@@ -198,6 +274,43 @@ class ConfigPage extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _ResponsiveFieldsGrid extends StatelessWidget {
+  final List<Widget> children;
+
+  const _ResponsiveFieldsGrid({
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount;
+        if (constraints.maxWidth < 420) {
+          crossAxisCount = 2;
+        } else if (constraints.maxWidth < 900) {
+          crossAxisCount = 3;
+        } else {
+          crossAxisCount = 4;
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          itemCount: children.length,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: constraints.maxWidth < 420 ? 1.55 : 1.8,
+          ),
+          itemBuilder: (_, index) => children[index],
+        );
+      },
     );
   }
 }

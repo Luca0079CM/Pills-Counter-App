@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../theme/app_colors.dart';
 
 class NumericInputField extends StatelessWidget {
   final String label;
@@ -19,10 +20,14 @@ class NumericInputField extends StatelessWidget {
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+      ),
       decoration: InputDecoration(
         labelText: label,
-        filled: true,
-        fillColor: fillColor,
+        fillColor: fillColor ?? const Color(0xFFF4F6F8),
       ),
     );
   }

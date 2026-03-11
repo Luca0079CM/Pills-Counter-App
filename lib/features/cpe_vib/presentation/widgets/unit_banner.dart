@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class UnitBanner extends StatelessWidget {
   final int unita;
@@ -11,29 +12,42 @@ class UnitBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF546E7A),
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFFEAF1F6),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'UN',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-            ),
+          const Icon(
+            Icons.precision_manufacturing,
+            color: AppColors.neutral,
+            size: 30,
           ),
-          const SizedBox(width: 8),
-          Text(
-            '$unita',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Unità lette',
+                  style: TextStyle(
+                    color: AppColors.neutral,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '$unita',
+                  style: const TextStyle(
+                    color: AppColors.neutral,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 24,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
