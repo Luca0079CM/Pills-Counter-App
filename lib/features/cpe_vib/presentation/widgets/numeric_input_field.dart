@@ -6,12 +6,18 @@ class NumericInputField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final Color? fillColor;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final TapRegionCallback? onTapOutside;
 
   const NumericInputField({
     super.key,
     required this.label,
     required this.controller,
     this.fillColor,
+    this.onChanged,
+    this.onSubmitted,
+    this.onTapOutside,
   });
 
   @override
@@ -20,6 +26,9 @@ class NumericInputField extends StatelessWidget {
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      onTapOutside: onTapOutside,
       style: const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w700,

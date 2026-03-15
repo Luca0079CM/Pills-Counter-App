@@ -9,8 +9,6 @@ import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import '../../data/datasources/settings_local_datasource.dart';
 import '../../data/datasources/wifi_datasource.dart';
 import '../../data/repositories/cpe_vib_repository.dart';
-import '../../domain/entities/app_settings.dart';
-import '../../domain/entities/machine_params.dart';
 import '../../domain/services/command_builder.dart';
 import '../../domain/services/frame_parser.dart';
 import 'cpe_vib_state.dart';

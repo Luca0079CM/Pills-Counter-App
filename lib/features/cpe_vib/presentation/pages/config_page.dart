@@ -33,6 +33,55 @@ class ConfigPage extends StatelessWidget {
     required this.outgoingTextController,
   });
 
+  Future<void> _showValidationDialog(
+      BuildContext context, {
+        required String title,
+        required String message,
+      }) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _validatePercentageField(
+      BuildContext context, {
+        required TextEditingController controller,
+        required String fieldLabel,
+      }) async {
+    final text = controller.text.trim();
+
+    if (text.isEmpty) {
+      await _showValidationDialog(
+        context,
+        title: 'Valore non valido',
+        message: '$fieldLabel deve essere compreso tra 1 e 100.',
+      );
+      return;
+    }
+
+    final value = int.tryParse(text);
+
+    if (value == null || value < 1 || value > 100) {
+      await _showValidationDialog(
+        context,
+        title: 'Valore non valido',
+        message: '$fieldLabel deve essere compreso tra 1 e 100.',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = controller.state;
@@ -59,18 +108,32 @@ class ConfigPage extends StatelessWidget {
                         controller: pezziController,
                       ),
                       NumericInputField(
-                        label: '%Vib_C',
+                        label: 'Percentuale Vibr. Piatto',
                         controller: vibCamController,
+                        onSubmitted: (_) => _validatePercentageField(
+                          context,
+                          controller: vibCamController,
+                          fieldLabel: 'Percentuale Vibr. Piatto',
+                        ),
+                        onTapOutside: (_) => _validatePercentageField(
+                          context,
+                          controller: vibCamController,
+                          fieldLabel: 'Percentuale Vibr. Piatto',
+                        ),
                       ),
                       NumericInputField(
-                        label: '%Vib_T',
+                        label: 'Percentuale Vibr. Tramolgia',
                         controller: vibTazController,
-                      ),
-                      _buildFormDropdown(controller, state.params.formValue),
-                      NumericInputField(
-                        label: 'RitCH',
-                        controller: ritChController,
-                        fillColor: const Color(0xFFFFE5E5),
+                        onSubmitted: (_) => _validatePercentageField(
+                          context,
+                          controller: vibTazController,
+                          fieldLabel: 'Percentuale Vibr. Tramolgia',
+                        ),
+                        onTapOutside: (_) => _validatePercentageField(
+                          context,
+                          controller: vibTazController,
+                          fieldLabel: 'Percentuale Vibr. Tramolgia',
+                        ),
                       ),
                     ],
                   ),
