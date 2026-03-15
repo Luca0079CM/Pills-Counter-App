@@ -135,6 +135,12 @@ class ConfigPage extends StatelessWidget {
                           fieldLabel: 'Percentuale Vibr. Tramolgia',
                         ),
                       ),
+                      _buildFormDropdown(controller, state.params.formValue),
+                      NumericInputField(
+                        label: 'Ritardo Chiusura Canale',
+                        controller: ritChController,
+                        fillColor: const Color(0xFFFFE5E5),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
