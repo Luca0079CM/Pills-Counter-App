@@ -105,7 +105,7 @@ class ConfigPage extends StatelessWidget {
                   _ResponsiveFieldsGrid(
                     children: [
                       NumericInputField(
-                        label: 'Pezzi',
+                        label: 'Pezzi (1-500)',
                         controller: pezziController,
                       ),
                       NumericInputField(

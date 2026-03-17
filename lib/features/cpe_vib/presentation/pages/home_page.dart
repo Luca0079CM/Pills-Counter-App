@@ -92,7 +92,7 @@ class HomePage extends StatelessWidget {
                         return Column(
                           children: [
                             NumericInputField(
-                              label: 'Pezzi',
+                              label: 'Pezzi (1-500)',
                               controller: pezziController,
                             ),
                             const SizedBox(height: 12),
@@ -110,7 +110,7 @@ class HomePage extends StatelessWidget {
                           Expanded(
                             flex: 2,
                             child: NumericInputField(
-                              label: 'Pezzi',
+                              label: 'Pezzi (1-500)',
                               controller: pezziController,
                             ),
                           ),
@@ -125,6 +125,15 @@ class HomePage extends StatelessWidget {
                         ],
                       );
                     },
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Range consentito: da 1 a 500 pezzi',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -172,20 +181,11 @@ class HomePage extends StatelessWidget {
 
                       if (compact) {
                         return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AppSecondaryButton(
-                              label:
-                              state.isConMode ? 'Disattiva Link' : 'Attiva Link',
-                              icon: state.isConMode
-                                  ? Icons.link_off
-                                  : Icons.link,
+                            _LinkActionButton(
+                              isConnected: state.isConMode,
                               onPressed: controller.toggleConMode,
-                              backgroundColor: state.isConMode
-                                  ? const Color(0xFFFFF8E1)
-                                  : const Color(0xFFE8EEF5),
-                              foregroundColor: state.isConMode
-                                  ? const Color(0xFF8A6D1F)
-                                  : AppColors.neutral,
                             ),
                             const SizedBox(height: 12),
                             AppPrimaryButton(
@@ -204,22 +204,11 @@ class HomePage extends StatelessWidget {
                       }
 
                       return Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Expanded(
-                            child: AppSecondaryButton(
-                              label:
-                              state.isConMode ? 'Disattiva Link' : 'Attiva Link',
-                              icon: state.isConMode
-                                  ? Icons.link_off
-                                  : Icons.link,
-                              onPressed: controller.toggleConMode,
-                              backgroundColor: state.isConMode
-                                  ? const Color(0xFFFFF8E1)
-                                  : const Color(0xFFE8EEF5),
-                              foregroundColor: state.isConMode
-                                  ? const Color(0xFF8A6D1F)
-                                  : AppColors.neutral,
-                            ),
+                          _LinkActionButton(
+                            isConnected: state.isConMode,
+                            onPressed: controller.toggleConMode,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -244,6 +233,37 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _LinkActionButton extends StatelessWidget {
+  final bool isConnected;
+  final VoidCallback onPressed;
+
+  const _LinkActionButton({
+    required this.isConnected,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(isConnected ? Icons.link_off : Icons.link, size: 17),
+      label: Text(isConnected ? 'Disattiva link' : 'Attiva link'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor:
+            isConnected ? const Color(0xFF8A6D1F) : AppColors.textSecondary,
+        backgroundColor:
+            isConnected ? const Color(0xFFFFF8E1) : const Color(0xFFEAF1F6),
+        side: BorderSide(
+          color: isConnected ? const Color(0xFFF3D9A4) : AppColors.border,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: const VisualDensity(horizontal: -1, vertical: -1),
       ),
     );
   }
