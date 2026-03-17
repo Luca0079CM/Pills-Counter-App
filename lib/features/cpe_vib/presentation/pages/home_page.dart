@@ -202,7 +202,7 @@ class HomePage extends StatelessWidget {
                         ? Icons.pause_circle
                         : Icons.play_arrow_rounded,
                     onPressed: controller.onStart,
-                    height: 66,
+                    height: 70,
                     backgroundColor: AppColors.danger,
                   ),
                 ],
