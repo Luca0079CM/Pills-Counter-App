@@ -470,17 +470,15 @@ class CpeVibController extends ChangeNotifier {
     final p = _state.params;
     bool okAll = true;
 
+    // TRASMETTE I PARAMETRI IN SEQ.
     okAll = okAll && await _sendConfigCommand(_commandBuilder.pezzi(p.pezzi));
     okAll = okAll && await _sendConfigCommand(_commandBuilder.form(p.formValue));
-
-    if (_state.settings.expMode) {
-      okAll = okAll && await _sendConfigCommand(_commandBuilder.seOn(p.seOn));
-      okAll = okAll && await _sendConfigCommand(_commandBuilder.seOff(p.seOff));
-    }
-
+    okAll = okAll && await _sendConfigCommand(_commandBuilder.seOn(p.seOn));
+    okAll = okAll && await _sendConfigCommand(_commandBuilder.seOff(p.seOff));
     okAll = okAll && await _sendConfigCommand(_commandBuilder.vibCam(p.vibCam));
     okAll = okAll && await _sendConfigCommand(_commandBuilder.vibTaz(p.vibTaz));
 
+    // nel vecchio flusso dopo la sequenza veniva richiesto l'aggiornamento
     await sendAscii(_commandBuilder.refreshParams());
 
     _state = _state.copyWith(
@@ -520,6 +518,7 @@ class CpeVibController extends ChangeNotifier {
   Future<bool> _sendConfigCommand(String payload) async {
     try {
       await sendAscii(_commandBuilder.configHandshake());
+
       final ok1 = await _waitImpostaAck(const Duration(milliseconds: 1500));
       if (!ok1) return false;
 
@@ -527,6 +526,7 @@ class CpeVibController extends ChangeNotifier {
       await sendAscii(payload);
 
       final ok2 = await _waitImpostaAck(const Duration(milliseconds: 1500));
+
       await Future.delayed(const Duration(milliseconds: 500));
 
       return ok2;
