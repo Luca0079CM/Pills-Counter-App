@@ -4,7 +4,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../widgets/log_panel.dart';
 import '../widgets/numeric_input_field.dart';
-import '../widgets/terminal_selector.dart';
 import '../widgets/channels_capsule_card.dart';
 import '../widgets/common/app_page_padding.dart';
 import '../widgets/common/app_primary_button.dart';
@@ -123,17 +122,17 @@ class ConfigPage extends StatelessWidget {
                         ),
                       ),
                       NumericInputField(
-                        label: 'Vib. tramoggia (%)',
+                        label: 'Vib. Tramolgia (%)',
                         controller: vibTazController,
                         onSubmitted: (_) => _validatePercentageField(
                           context,
                           controller: vibTazController,
-                          fieldLabel: 'Vibrazione tramoggia (%)',
+                          fieldLabel: 'Vibrazione Tramolgia (%)',
                         ),
                         onTapOutside: (_) => _validatePercentageField(
                           context,
                           controller: vibTazController,
-                          fieldLabel: 'Vibrazione tramoggia (%)',
+                          fieldLabel: 'Vibrazione Tramolgia (%)',
                         ),
                       ),
                       _buildFormDropdown(controller, state.params.formValue),
@@ -228,11 +227,6 @@ class ConfigPage extends StatelessWidget {
                           controller: seOnController,
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-                    TerminalSelector(
-                      activeTerminal: state.activeTerminal,
-                      onSelected: controller.setActiveTerminal,
                     ),
                     const SizedBox(height: 16),
                     TextField(
