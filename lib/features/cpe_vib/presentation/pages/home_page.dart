@@ -22,6 +22,30 @@ class HomePage extends StatelessWidget {
     required this.pezziController,
   });
 
+
+  Widget _buildLinkActionButton({
+    required bool isConnected,
+    required VoidCallback onPressed,
+  }) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(isConnected ? Icons.link_off : Icons.link, size: 17),
+      label: Text(isConnected ? 'Disattiva link' : 'Attiva link'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor:
+            isConnected ? const Color(0xFF8A6D1F) : AppColors.textSecondary,
+        backgroundColor:
+            isConnected ? const Color(0xFFFFF8E1) : const Color(0xFFEAF1F6),
+        side: BorderSide(
+          color: isConnected ? const Color(0xFFF3D9A4) : AppColors.border,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: const VisualDensity(horizontal: -1, vertical: -1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = controller.state;
@@ -92,7 +116,7 @@ class HomePage extends StatelessWidget {
                         return Column(
                           children: [
                             NumericInputField(
-                              label: 'Pezzi (1-500)',
+                              label: 'Pezzi (1-999)',
                               controller: pezziController,
                             ),
                             const SizedBox(height: 12),
@@ -110,7 +134,7 @@ class HomePage extends StatelessWidget {
                           Expanded(
                             flex: 2,
                             child: NumericInputField(
-                              label: 'Pezzi (1-500)',
+                              label: 'Pezzi (1-999)',
                               controller: pezziController,
                             ),
                           ),
@@ -128,7 +152,7 @@ class HomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Range consentito: da 1 a 500 pezzi',
+                    'Range consentito: da 1 a 999 pezzi',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
@@ -183,7 +207,7 @@ class HomePage extends StatelessWidget {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _LinkActionButton(
+                            _buildLinkActionButton(
                               isConnected: state.isConMode,
                               onPressed: controller.toggleConMode,
                             ),
@@ -206,7 +230,7 @@ class HomePage extends StatelessWidget {
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _LinkActionButton(
+                          _buildLinkActionButton(
                             isConnected: state.isConMode,
                             onPressed: controller.toggleConMode,
                           ),
@@ -233,37 +257,6 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _LinkActionButton extends StatelessWidget {
-  final bool isConnected;
-  final VoidCallback onPressed;
-
-  const _LinkActionButton({
-    required this.isConnected,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(isConnected ? Icons.link_off : Icons.link, size: 17),
-      label: Text(isConnected ? 'Disattiva link' : 'Attiva link'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor:
-            isConnected ? const Color(0xFF8A6D1F) : AppColors.textSecondary,
-        backgroundColor:
-            isConnected ? const Color(0xFFFFF8E1) : const Color(0xFFEAF1F6),
-        side: BorderSide(
-          color: isConnected ? const Color(0xFFF3D9A4) : AppColors.border,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: const VisualDensity(horizontal: -1, vertical: -1),
       ),
     );
   }
