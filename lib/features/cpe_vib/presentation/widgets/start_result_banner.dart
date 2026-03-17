@@ -4,11 +4,13 @@ import '../theme/app_colors.dart';
 class StartResultBanner extends StatelessWidget {
   final bool ok;
   final int pezzi;
+  final bool compact;
 
   const StartResultBanner({
     super.key,
     required this.ok,
     required this.pezzi,
+    this.compact = false,
   });
 
   @override
@@ -18,15 +20,15 @@ class StartResultBanner extends StatelessWidget {
     final icon = ok ? Icons.check_circle : Icons.cancel;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16, vertical: compact ? 10 : 16),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         children: [
-          Icon(icon, color: fg, size: 30),
-          const SizedBox(width: 12),
+          Icon(icon, color: fg, size: compact ? 24 : 30),
+          SizedBox(width: compact ? 8 : 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,16 +39,16 @@ class StartResultBanner extends StatelessWidget {
                   style: TextStyle(
                     color: fg,
                     fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                    fontSize: compact ? 11 : 13,
                   ),
                 ),
-                const SizedBox(height: 3),
+                SizedBox(height: compact ? 2 : 3),
                 Text(
                   'Pz: $pezzi',
                   style: TextStyle(
                     color: fg,
                     fontWeight: FontWeight.w800,
-                    fontSize: 24,
+                    fontSize: compact ? 18 : 24,
                   ),
                 ),
               ],
