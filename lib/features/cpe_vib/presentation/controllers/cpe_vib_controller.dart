@@ -88,7 +88,7 @@ class CpeVibController extends ChangeNotifier {
   }
 
   void setPezzi(int value) {
-    final safeValue = value.clamp(0, 500).toInt();
+    final safeValue = value.clamp(0, 999).toInt();
     _state = _state.copyWith(
       params: _state.params.copyWith(pezzi: safeValue),
     );
