@@ -280,8 +280,8 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
                           const SizedBox(width: 8),
                           Text(
                             state.settings.expMode
-                                ? 'Nascondi funzioni avanzate'
-                                : 'Mostra funzioni avanzate',
+                                ? 'Funzioni avanzate: ON'
+                                : 'Funzioni avanzate: OFF',
                           ),
                         ],
                       ),

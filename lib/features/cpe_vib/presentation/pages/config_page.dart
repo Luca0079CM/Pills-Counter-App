@@ -109,36 +109,36 @@ class ConfigPage extends StatelessWidget {
                         controller: pezziController,
                       ),
                       NumericInputField(
-                        label: 'Percentuale Vibr. Piatto',
+                        label: 'Vib. piatto (%)',
                         controller: vibCamController,
                         onSubmitted: (_) => _validatePercentageField(
                           context,
                           controller: vibCamController,
-                          fieldLabel: 'Percentuale Vibr. Piatto',
+                          fieldLabel: 'Vibrazione piatto (%)',
                         ),
                         onTapOutside: (_) => _validatePercentageField(
                           context,
                           controller: vibCamController,
-                          fieldLabel: 'Percentuale Vibr. Piatto',
+                          fieldLabel: 'Vibrazione piatto (%)',
                         ),
                       ),
                       NumericInputField(
-                        label: 'Percentuale Vibr. Tramolgia',
+                        label: 'Vib. tramoggia (%)',
                         controller: vibTazController,
                         onSubmitted: (_) => _validatePercentageField(
                           context,
                           controller: vibTazController,
-                          fieldLabel: 'Percentuale Vibr. Tramolgia',
+                          fieldLabel: 'Vibrazione tramoggia (%)',
                         ),
                         onTapOutside: (_) => _validatePercentageField(
                           context,
                           controller: vibTazController,
-                          fieldLabel: 'Percentuale Vibr. Tramolgia',
+                          fieldLabel: 'Vibrazione tramoggia (%)',
                         ),
                       ),
                       _buildFormDropdown(controller, state.params.formValue),
                       NumericInputField(
-                        label: 'Ritardo Chiusura Canale',
+                        label: 'Ritardo canale',
                         controller: ritChController,
                         fillColor: const Color(0xFFFFE5E5),
                       ),
@@ -161,7 +161,7 @@ class ConfigPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             AppSecondaryButton(
-                              label: 'Invia solo RitCH',
+                              label: 'Invia solo Ritardo Canale',
                               icon: Icons.timer,
                               onPressed: state.isParamBusy
                                   ? null
@@ -187,7 +187,7 @@ class ConfigPage extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: AppSecondaryButton(
-                              label: 'Invia solo RitCH',
+                              label: 'Invia solo Ritardo Canale',
                               icon: Icons.timer,
                               onPressed: state.isParamBusy
                                   ? null
@@ -293,7 +293,7 @@ class ConfigPage extends StatelessWidget {
     final safeValue = [1, 2, 3].contains(value) ? value : 1;
 
     return InputDecorator(
-      decoration: const InputDecoration(labelText: 'Form'),
+      decoration: const InputDecoration(labelText: 'Formato'),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           isExpanded: true,
@@ -328,9 +328,9 @@ class _ResponsiveFieldsGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: isPhone ? 1.75 : 1.95,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: isPhone ? 1.95 : 2.05,
           ),
           itemBuilder: (_, index) => children[index],
         );
