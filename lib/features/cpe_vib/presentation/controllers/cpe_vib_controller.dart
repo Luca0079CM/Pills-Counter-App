@@ -365,24 +365,25 @@ class CpeVibController extends ChangeNotifier {
         _stopConMode();
         return;
       }
+
       if (_waitingProbe) {
-        sendAscii(_commandBuilder.probe());
+        sendAscii('>');
       }
     });
   }
 
   void _stopConMode({bool keepButtonState = false}) {
-    _state = _state.copyWith(
-      isAutoLoop: false,
-      isInAutoDelay: false,
-      delayBlinkOn: true,
-      isConMode: keepButtonState ? _state.isConMode : false,
-    );
-
     _autoRestartTimer?.cancel();
     _pollTimer?.cancel();
     _pollTimer = null;
     _waitingProbe = false;
+    _stopDelaySignal();
+
+    _state = _state.copyWith(
+      isAutoLoop: false,
+      isConMode: keepButtonState ? _state.isConMode : false,
+    );
+
     notifyListeners();
   }
 
