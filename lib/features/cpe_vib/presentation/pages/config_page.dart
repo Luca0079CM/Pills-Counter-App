@@ -362,12 +362,12 @@ class _ResponsiveFieldsGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         int crossAxisCount;
-        if (constraints.maxWidth < 420) {
-          crossAxisCount = 2;
+        if (constraints.maxWidth < 390) {
+          crossAxisCount = 1;
         } else if (constraints.maxWidth < 900) {
-          crossAxisCount = 3;
+          crossAxisCount = 2;
         } else {
-          crossAxisCount = 4;
+          crossAxisCount = 3;
         }
 
         return GridView.builder(
@@ -376,9 +376,9 @@ class _ResponsiveFieldsGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: constraints.maxWidth < 420 ? 1.55 : 1.8,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: crossAxisCount == 1 ? 3.1 : 2.0,
           ),
           itemBuilder: (_, index) => children[index],
         );
