@@ -5,6 +5,7 @@ import '../theme/app_spacing.dart';
 import '../widgets/log_panel.dart';
 import '../widgets/numeric_input_field.dart';
 import '../widgets/terminal_selector.dart';
+import '../widgets/channels_capsule_card.dart';
 import '../widgets/common/app_page_padding.dart';
 import '../widgets/common/app_primary_button.dart';
 import '../widgets/common/app_secondary_button.dart';
@@ -104,7 +105,7 @@ class ConfigPage extends StatelessWidget {
                   _ResponsiveFieldsGrid(
                     children: [
                       NumericInputField(
-                        label: 'Pezzi',
+                        label: 'Pezzi (1-999)',
                         controller: pezziController,
                       ),
                       NumericInputField(
@@ -202,6 +203,8 @@ class ConfigPage extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.section),
+            ChannelsCapsuleCard(controller: controller),
             const SizedBox(height: AppSpacing.section),
             AppSectionCard(
               child: Column(
@@ -359,12 +362,12 @@ class _ResponsiveFieldsGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         int crossAxisCount;
-        if (constraints.maxWidth < 420) {
-          crossAxisCount = 2;
+        if (constraints.maxWidth < 390) {
+          crossAxisCount = 1;
         } else if (constraints.maxWidth < 900) {
-          crossAxisCount = 3;
+          crossAxisCount = 2;
         } else {
-          crossAxisCount = 4;
+          crossAxisCount = 3;
         }
 
         return GridView.builder(
@@ -373,9 +376,9 @@ class _ResponsiveFieldsGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: constraints.maxWidth < 420 ? 1.55 : 1.8,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: crossAxisCount == 1 ? 3.1 : 2.0,
           ),
           itemBuilder: (_, index) => children[index],
         );
