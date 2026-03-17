@@ -420,7 +420,7 @@ class CpeVibController extends ChangeNotifier {
 
   Future<void> onImpostaPressed() async {
     final pezzi = _state.params.pezzi;
-    if (pezzi < 1 || pezzi > 999) {
+    if (pezzi < 1 || pezzi > 500) {
       _state = _state.copyWith(hasError: true);
       notifyListeners();
       return;
@@ -441,7 +441,7 @@ class CpeVibController extends ChangeNotifier {
   bool validateRanges() {
     final p = _state.params;
 
-    if (p.pezzi < 1 || p.pezzi > 999) return false;
+    if (p.pezzi < 1 || p.pezzi > 500) return false;
     if (![1, 2, 3].contains(p.formValue)) return false;
     if (p.seOff < 1 || p.seOff > 255) return false;
     if (p.seOn < 1 || p.seOn > 255) return false;
