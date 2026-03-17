@@ -205,40 +205,6 @@ class ConfigPage extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.section),
             ChannelsCapsuleCard(controller: controller),
-            const SizedBox(height: AppSpacing.section),
-            AppSectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AppSectionHeader(
-                    title: 'Modalità avanzata',
-                    subtitle: 'Abilita o disabilita le funzioni tecniche',
-                    icon: Icons.construction,
-                  ),
-                  const SizedBox(height: 16),
-                  SwitchListTile.adaptive(
-                    value: state.settings.expMode,
-                    onChanged: (_) => controller.toggleExpMode(),
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text(
-                      'Funzioni avanzate (EXP)',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    subtitle: Text(
-                      state.settings.expMode
-                          ? 'Le opzioni avanzate sono visibili'
-                          : 'Le opzioni avanzate sono nascoste',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             if (state.settings.expMode) ...[
               const SizedBox(height: AppSpacing.section),
               AppSectionCard(
@@ -264,14 +230,6 @@ class ConfigPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Terminale attivo',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     TerminalSelector(
                       activeTerminal: state.activeTerminal,
                       onSelected: controller.setActiveTerminal,
@@ -361,14 +319,8 @@ class _ResponsiveFieldsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        int crossAxisCount;
-        if (constraints.maxWidth < 390) {
-          crossAxisCount = 1;
-        } else if (constraints.maxWidth < 900) {
-          crossAxisCount = 2;
-        } else {
-          crossAxisCount = 3;
-        }
+        final isPhone = constraints.maxWidth < 900;
+        final crossAxisCount = isPhone ? 2 : 3;
 
         return GridView.builder(
           shrinkWrap: true,
@@ -378,7 +330,7 @@ class _ResponsiveFieldsGrid extends StatelessWidget {
             crossAxisCount: crossAxisCount,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: crossAxisCount == 1 ? 3.1 : 2.0,
+            childAspectRatio: isPhone ? 1.75 : 1.95,
           ),
           itemBuilder: (_, index) => children[index],
         );
