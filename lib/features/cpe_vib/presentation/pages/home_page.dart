@@ -237,34 +237,3 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-
-class _LinkActionButton extends StatelessWidget {
-  final bool isConnected;
-  final VoidCallback onPressed;
-
-  const _LinkActionButton({
-    required this.isConnected,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(isConnected ? Icons.link_off : Icons.link, size: 17),
-      label: Text(isConnected ? 'Disattiva link' : 'Attiva link'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor:
-            isConnected ? const Color(0xFF8A6D1F) : AppColors.textSecondary,
-        backgroundColor:
-            isConnected ? const Color(0xFFFFF8E1) : const Color(0xFFEAF1F6),
-        side: BorderSide(
-          color: isConnected ? const Color(0xFFF3D9A4) : AppColors.border,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: const VisualDensity(horizontal: -1, vertical: -1),
-      ),
-    );
-  }
-}
