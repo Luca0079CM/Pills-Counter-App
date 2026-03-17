@@ -129,6 +129,11 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
       }
       return;
     }
+
+    if (value == 'exp') {
+      _controller.toggleExpMode();
+      return;
+    }
   }
 
   Future<int?> _pickTimerDialog(
@@ -262,6 +267,24 @@ class _CpeVibShellPageState extends State<CpeVibShellPage> {
                     const PopupMenuItem(
                       value: 'timer',
                       child: Text('AUTO-START (Timer)'),
+                    ),
+                    PopupMenuItem(
+                      value: 'exp',
+                      child: Row(
+                        children: [
+                          Icon(
+                            state.settings.expMode
+                                ? Icons.visibility_off
+                                : Icons.construction,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            state.settings.expMode
+                                ? 'Nascondi funzioni avanzate'
+                                : 'Mostra funzioni avanzate',
+                          ),
+                        ],
+                      ),
                     ),
                     const PopupMenuDivider(),
                     const PopupMenuItem(
