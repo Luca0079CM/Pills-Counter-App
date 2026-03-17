@@ -39,7 +39,7 @@ class HomePage extends StatelessWidget {
         side: BorderSide(
           color: isConnected ? const Color(0xFFF3D9A4) : AppColors.border,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: const VisualDensity(horizontal: -1, vertical: -1),
       ),
@@ -150,15 +150,6 @@ class HomePage extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Range consentito: da 1 a 999 pezzi',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -187,6 +178,10 @@ class HomePage extends StatelessWidget {
                             : AppColors.neutral,
                         icon: state.isConMode ? Icons.link : Icons.link_off,
                       ),
+                      _buildLinkActionButton(
+                        isConnected: state.isConMode,
+                        onPressed: controller.toggleConMode,
+                      ),
                       if (state.timer != 0)
                         AppStatusChip(
                           label: state.isAutoLoop
@@ -198,59 +193,17 @@ class HomePage extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final compact = constraints.maxWidth < 430;
-
-                      if (compact) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildLinkActionButton(
-                              isConnected: state.isConMode,
-                              onPressed: controller.toggleConMode,
-                            ),
-                            const SizedBox(height: 12),
-                            AppPrimaryButton(
-                              label: state.timer > 0 && state.isAutoLoop
-                                  ? 'STOP AUTO-START'
-                                  : 'START',
-                              icon: state.timer > 0 && state.isAutoLoop
-                                  ? Icons.pause_circle
-                                  : Icons.play_arrow,
-                              onPressed: controller.onStart,
-                              height: 58,
-                              backgroundColor: AppColors.danger,
-                            ),
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          _buildLinkActionButton(
-                            isConnected: state.isConMode,
-                            onPressed: controller.toggleConMode,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: AppPrimaryButton(
-                              label: state.timer > 0 && state.isAutoLoop
-                                  ? 'STOP AUTO-START'
-                                  : 'START',
-                              icon: state.timer > 0 && state.isAutoLoop
-                                  ? Icons.pause_circle
-                                  : Icons.play_arrow,
-                              onPressed: controller.onStart,
-                              height: 54,
-                              backgroundColor: AppColors.danger,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                  const SizedBox(height: 12),
+                  AppPrimaryButton(
+                    label: state.timer > 0 && state.isAutoLoop
+                        ? 'STOP AUTO-START'
+                        : 'START CONTEGGIO',
+                    icon: state.timer > 0 && state.isAutoLoop
+                        ? Icons.pause_circle
+                        : Icons.play_arrow_rounded,
+                    onPressed: controller.onStart,
+                    height: 66,
+                    backgroundColor: AppColors.danger,
                   ),
                 ],
               ),
