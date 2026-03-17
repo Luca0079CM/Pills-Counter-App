@@ -5,6 +5,7 @@ import '../theme/app_spacing.dart';
 import '../widgets/log_panel.dart';
 import '../widgets/numeric_input_field.dart';
 import '../widgets/terminal_selector.dart';
+import '../widgets/channels_capsule_card.dart';
 import '../widgets/common/app_page_padding.dart';
 import '../widgets/common/app_primary_button.dart';
 import '../widgets/common/app_secondary_button.dart';
@@ -104,40 +105,40 @@ class ConfigPage extends StatelessWidget {
                   _ResponsiveFieldsGrid(
                     children: [
                       NumericInputField(
-                        label: 'Pezzi',
+                        label: 'Pezzi (1-999)',
                         controller: pezziController,
                       ),
                       NumericInputField(
-                        label: 'Percentuale Vibr. Piatto',
+                        label: 'Vib. piatto (%)',
                         controller: vibCamController,
                         onSubmitted: (_) => _validatePercentageField(
                           context,
                           controller: vibCamController,
-                          fieldLabel: 'Percentuale Vibr. Piatto',
+                          fieldLabel: 'Vibrazione piatto (%)',
                         ),
                         onTapOutside: (_) => _validatePercentageField(
                           context,
                           controller: vibCamController,
-                          fieldLabel: 'Percentuale Vibr. Piatto',
+                          fieldLabel: 'Vibrazione piatto (%)',
                         ),
                       ),
                       NumericInputField(
-                        label: 'Percentuale Vibr. Tramolgia',
+                        label: 'Vib. tramoggia (%)',
                         controller: vibTazController,
                         onSubmitted: (_) => _validatePercentageField(
                           context,
                           controller: vibTazController,
-                          fieldLabel: 'Percentuale Vibr. Tramolgia',
+                          fieldLabel: 'Vibrazione tramoggia (%)',
                         ),
                         onTapOutside: (_) => _validatePercentageField(
                           context,
                           controller: vibTazController,
-                          fieldLabel: 'Percentuale Vibr. Tramolgia',
+                          fieldLabel: 'Vibrazione tramoggia (%)',
                         ),
                       ),
                       _buildFormDropdown(controller, state.params.formValue),
                       NumericInputField(
-                        label: 'Ritardo Chiusura Canale',
+                        label: 'Ritardo canale',
                         controller: ritChController,
                         fillColor: const Color(0xFFFFE5E5),
                       ),
@@ -160,7 +161,7 @@ class ConfigPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             AppSecondaryButton(
-                              label: 'Invia solo RitCH',
+                              label: 'Invia solo Ritardo Canale',
                               icon: Icons.timer,
                               onPressed: state.isParamBusy
                                   ? null
@@ -186,7 +187,7 @@ class ConfigPage extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: AppSecondaryButton(
-                              label: 'Invia solo RitCH',
+                              label: 'Invia solo Ritardo Canale',
                               icon: Icons.timer,
                               onPressed: state.isParamBusy
                                   ? null
@@ -203,39 +204,7 @@ class ConfigPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.section),
-            AppSectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AppSectionHeader(
-                    title: 'Modalità avanzata',
-                    subtitle: 'Abilita o disabilita le funzioni tecniche',
-                    icon: Icons.construction,
-                  ),
-                  const SizedBox(height: 16),
-                  SwitchListTile.adaptive(
-                    value: state.settings.expMode,
-                    onChanged: (_) => controller.toggleExpMode(),
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text(
-                      'Funzioni avanzate (EXP)',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    subtitle: Text(
-                      state.settings.expMode
-                          ? 'Le opzioni avanzate sono visibili'
-                          : 'Le opzioni avanzate sono nascoste',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ChannelsCapsuleCard(controller: controller),
             if (state.settings.expMode) ...[
               const SizedBox(height: AppSpacing.section),
               AppSectionCard(
@@ -261,14 +230,6 @@ class ConfigPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Terminale attivo',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     TerminalSelector(
                       activeTerminal: state.activeTerminal,
                       onSelected: controller.setActiveTerminal,
@@ -332,7 +293,7 @@ class ConfigPage extends StatelessWidget {
     final safeValue = [1, 2, 3].contains(value) ? value : 1;
 
     return InputDecorator(
-      decoration: const InputDecoration(labelText: 'Form'),
+      decoration: const InputDecoration(labelText: 'Formato'),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           isExpanded: true,
@@ -358,14 +319,8 @@ class _ResponsiveFieldsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        int crossAxisCount;
-        if (constraints.maxWidth < 420) {
-          crossAxisCount = 2;
-        } else if (constraints.maxWidth < 900) {
-          crossAxisCount = 3;
-        } else {
-          crossAxisCount = 4;
-        }
+        final isPhone = constraints.maxWidth < 900;
+        final crossAxisCount = isPhone ? 2 : 3;
 
         return GridView.builder(
           shrinkWrap: true,
@@ -373,9 +328,9 @@ class _ResponsiveFieldsGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: constraints.maxWidth < 420 ? 1.55 : 1.8,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: isPhone ? 1.95 : 2.05,
           ),
           itemBuilder: (_, index) => children[index],
         );
