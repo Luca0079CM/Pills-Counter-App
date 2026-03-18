@@ -87,12 +87,13 @@ class ConnectionPage extends StatelessWidget {
                   children: [
                     const AppSectionHeader(
                       title: 'Terminale attivo',
-                      subtitle: 'Seleziona il terminale da usare',
+                      subtitle: "La macchina usa sempre l'IP fisso 192.168.1.101",
                       icon: Icons.router,
                     ),
                     const SizedBox(height: 16),
                     TerminalSelector(
-                      activeTerminal: state.activeTerminal,
+                      activeTerminal: 1,
+                      enabledTerminals: const {1},
                       onSelected: controller.setActiveTerminal,
                     ),
                   ],
