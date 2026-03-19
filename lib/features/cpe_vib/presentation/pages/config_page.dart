@@ -203,7 +203,7 @@ class ConfigPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.section),
-            ChannelsCapsuleCard(controller: controller),
+            ChannelsDisplayModeCard(controller: controller),
             if (state.settings.expMode) ...[
               const SizedBox(height: AppSpacing.section),
               AppSectionCard(
