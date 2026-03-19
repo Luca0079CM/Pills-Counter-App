@@ -4,54 +4,39 @@ import 'dart:io';
 import 'dart:typed_data';
 
 class WifiDatasource {
-  final Map<int, Socket> _termSocks = {};
-  final Map<int, StreamSubscription<List<int>>> _termSubs = {};
+  Socket? _socket;
+  StreamSubscription<List<int>>? _socketSubscription;
 
-  Socket? _activeSocket;
+  bool get isConnected => _socket != null;
 
-  bool get isConnected => _activeSocket != null;
-
-  Future<Map<int, bool>> connectTerms({
-    required String baseIp,
+  Future<bool> connect({
+    required String host,
     required int port,
-    required void Function(int terminal, Uint8List data) onData,
-    required void Function(int terminal) onDone,
-    required void Function(int terminal, Object error) onError,
-    Duration timeout = const Duration(milliseconds: 800),
+    required void Function(Uint8List data) onData,
+    required void Function() onDone,
+    required void Function(Object error) onError,
+    Duration timeout = const Duration(milliseconds: 900),
   }) async {
-    final results = <int, bool>{1: false, 2: false, 3: false};
-
     await disconnectAll();
 
-    for (final n in [1, 2, 3]) {
-      final ip = '$baseIp.${100 + n}';
-      try {
-        final socket = await Socket.connect(ip, port, timeout: timeout);
-        final sub = socket.listen(
-              (data) => onData(n, Uint8List.fromList(data)),
-          onDone: () => onDone(n),
-          onError: (e) => onError(n, e),
-        );
-
-        _termSocks[n] = socket;
-        _termSubs[n] = sub;
-        results[n] = true;
-      } catch (_) {
-        results[n] = false;
-      }
+    try {
+      final socket = await Socket.connect(host, port, timeout: timeout);
+      _socket = socket;
+      _socketSubscription = socket.listen(
+        (data) => onData(Uint8List.fromList(data)),
+        onDone: onDone,
+        onError: onError,
+      );
+      return true;
+    } catch (_) {
+      _socket = null;
+      _socketSubscription = null;
+      return false;
     }
-
-    return results;
   }
-
-  void setActiveTerminal(int terminal) {
-    _activeSocket = _termSocks[terminal];
-  }
-
-  bool hasTerminal(int terminal) => _termSocks.containsKey(terminal);
 
   Future<void> sendAscii(String value) async {
-    final socket = _activeSocket;
+    final socket = _socket;
     if (socket == null) {
       throw StateError('Socket non attivo');
     }
@@ -61,20 +46,15 @@ class WifiDatasource {
   }
 
   Future<void> disconnectAll() async {
-    for (final sub in _termSubs.values) {
-      try {
-        await sub.cancel();
-      } catch (_) {}
-    }
+    try {
+      await _socketSubscription?.cancel();
+    } catch (_) {}
 
-    for (final socket in _termSocks.values) {
-      try {
-        await socket.close();
-      } catch (_) {}
-    }
+    try {
+      await _socket?.close();
+    } catch (_) {}
 
-    _termSubs.clear();
-    _termSocks.clear();
-    _activeSocket = null;
+    _socketSubscription = null;
+    _socket = null;
   }
 }
