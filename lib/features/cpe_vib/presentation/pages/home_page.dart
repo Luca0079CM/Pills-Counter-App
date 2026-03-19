@@ -5,6 +5,7 @@ import '../theme/app_spacing.dart';
 import '../widgets/numeric_input_field.dart';
 import '../widgets/start_result_banner.dart';
 import '../widgets/unit_banner.dart';
+import '../widgets/channels_capsule_card.dart';
 import '../widgets/common/app_page_padding.dart';
 import '../widgets/common/app_primary_button.dart';
 import '../widgets/common/app_secondary_button.dart';
@@ -193,7 +194,13 @@ class HomePage extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
+                  ChannelsCapsuleContent(
+                    controller: controller,
+                    title: 'Canali capsule',
+                    subtitle: 'Pillole residue durante il conteggio',
+                  ),
+                  const SizedBox(height: 14),
                   AppPrimaryButton(
                     label: state.timer > 0 && state.isAutoLoop
                         ? 'STOP AUTO-START'
