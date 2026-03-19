@@ -449,24 +449,33 @@ class CpeVibController extends ChangeNotifier {
     notifyListeners();
 
     final p = _state.params;
-    bool okAll = true;
+    final commands = <String>[
+      _commandBuilder.pezzi(p.pezzi),
+      _commandBuilder.form(p.formValue),
+      _commandBuilder.seOn(p.seOn),
+      _commandBuilder.seOff(p.seOff),
+      _commandBuilder.vibCam(p.vibCam),
+      _commandBuilder.vibTaz(p.vibTaz),
+    ];
 
-    // TRASMETTE I PARAMETRI IN SEQ.
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.pezzi(p.pezzi));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.form(p.formValue));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.seOn(p.seOn));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.seOff(p.seOff));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.vibCam(p.vibCam));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.vibTaz(p.vibTaz));
-
-    // nel vecchio flusso dopo la sequenza veniva richiesto l'aggiornamento
-    await sendAscii(_commandBuilder.refreshParams());
+    final okAll = await _sendConfigSequence(commands);
 
     _state = _state.copyWith(
       isParamBusy: false,
       hasError: !okAll,
     );
     notifyListeners();
+  }
+
+  Future<bool> _sendConfigSequence(List<String> payloads) async {
+    for (final payload in payloads) {
+      final ok = await _sendConfigCommand(payload);
+      if (!ok) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   Future<void> sendConfigSetRit() async {
