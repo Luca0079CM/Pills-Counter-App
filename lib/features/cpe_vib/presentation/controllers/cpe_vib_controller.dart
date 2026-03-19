@@ -400,7 +400,7 @@ class CpeVibController extends ChangeNotifier {
 
   Future<void> onImpostaPressed() async {
     final pezzi = _state.params.pezzi;
-    if (pezzi < 1 || pezzi > 500) {
+    if (pezzi < 1 || pezzi > 999) {
       _state = _state.copyWith(hasError: true);
       notifyListeners();
       return;
@@ -421,7 +421,7 @@ class CpeVibController extends ChangeNotifier {
   bool validateRanges() {
     final p = _state.params;
 
-    if (p.pezzi < 1 || p.pezzi > 500) return false;
+    if (p.pezzi < 1 || p.pezzi > 999) return false;
     if (![1, 2, 3].contains(p.formValue)) return false;
     if (p.seOff < 1 || p.seOff > 255) return false;
     if (p.seOn < 1 || p.seOn > 255) return false;
@@ -449,24 +449,33 @@ class CpeVibController extends ChangeNotifier {
     notifyListeners();
 
     final p = _state.params;
-    bool okAll = true;
+    final commands = <String>[
+      _commandBuilder.pezzi(p.pezzi),
+      _commandBuilder.form(p.formValue),
+      _commandBuilder.seOn(p.seOn),
+      _commandBuilder.seOff(p.seOff),
+      _commandBuilder.vibCam(p.vibCam),
+      _commandBuilder.vibTaz(p.vibTaz),
+    ];
 
-    // TRASMETTE I PARAMETRI IN SEQ.
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.pezzi(p.pezzi));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.form(p.formValue));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.seOn(p.seOn));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.seOff(p.seOff));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.vibCam(p.vibCam));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.vibTaz(p.vibTaz));
-
-    // nel vecchio flusso dopo la sequenza veniva richiesto l'aggiornamento
-    await sendAscii(_commandBuilder.refreshParams());
+    final okAll = await _sendConfigSequence(commands);
 
     _state = _state.copyWith(
       isParamBusy: false,
       hasError: !okAll,
     );
     notifyListeners();
+  }
+
+  Future<bool> _sendConfigSequence(List<String> payloads) async {
+    for (final payload in payloads) {
+      final ok = await _sendConfigCommand(payload);
+      if (!ok) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   Future<void> sendConfigSetRit() async {
