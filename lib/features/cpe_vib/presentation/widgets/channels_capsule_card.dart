@@ -5,10 +5,84 @@ import '../widgets/capsule_view.dart';
 import '../widgets/common/app_section_card.dart';
 import '../widgets/common/app_section_header.dart';
 
+
+class ChannelsCapsuleContent extends StatelessWidget {
+  final CpeVibController controller;
+  final bool showModeSelector;
+  final String title;
+  final String subtitle;
+
+  const ChannelsCapsuleContent({
+    super.key,
+    required this.controller,
+    this.showModeSelector = false,
+    this.title = 'Canali capsule',
+    this.subtitle = 'Pillole residue per canale',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final state = controller.state;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppSectionHeader(
+          title: title,
+          subtitle: subtitle,
+          icon: Icons.view_module,
+        ),
+        if (showModeSelector) ...[
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ChannelsModeToggle(
+              isSixChannels: state.settings.sixChannelsMode,
+              onChanged: (_) => controller.toggleSixChannelsMode(),
+            ),
+          ),
+        ],
+        const SizedBox(height: 18),
+        CapsuleView(
+          values: state.params.capsules,
+          showSix: state.settings.sixChannelsMode,
+        ),
+      ],
+    );
+  }
+}
+
 class ChannelsCapsuleCard extends StatelessWidget {
   final CpeVibController controller;
+  final bool showModeSelector;
+  final String title;
+  final String subtitle;
 
   const ChannelsCapsuleCard({
+    super.key,
+    required this.controller,
+    this.showModeSelector = false,
+    this.title = 'Canali capsule',
+    this.subtitle = 'Pillole residue per canale',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSectionCard(
+      child: ChannelsCapsuleContent(
+        controller: controller,
+        showModeSelector: showModeSelector,
+        title: title,
+        subtitle: subtitle,
+      ),
+    );
+  }
+}
+
+class ChannelsDisplayModeCard extends StatelessWidget {
+  final CpeVibController controller;
+
+  const ChannelsDisplayModeCard({
     super.key,
     required this.controller,
   });
@@ -22,24 +96,19 @@ class ChannelsCapsuleCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppSectionHeader(
-            title: 'Canali capsule',
+            title: 'Visualizzazione canali',
             subtitle: state.settings.sixChannelsMode
-                ? 'Visualizzazione 6 canali'
-                : 'Visualizzazione 3 canali',
-            icon: Icons.view_module,
+                ? 'Attualmente impostata su 6 canali'
+                : 'Attualmente impostata su 3 canali',
+            icon: Icons.tune,
           ),
           const SizedBox(height: 14),
           Align(
             alignment: Alignment.centerLeft,
-            child: _ChannelsToggle(
+            child: ChannelsModeToggle(
               isSixChannels: state.settings.sixChannelsMode,
               onChanged: (_) => controller.toggleSixChannelsMode(),
             ),
-          ),
-          const SizedBox(height: 18),
-          CapsuleView(
-            values: state.params.capsules,
-            showSix: state.settings.sixChannelsMode,
           ),
         ],
       ),
@@ -47,11 +116,12 @@ class ChannelsCapsuleCard extends StatelessWidget {
   }
 }
 
-class _ChannelsToggle extends StatelessWidget {
+class ChannelsModeToggle extends StatelessWidget {
   final bool isSixChannels;
   final ValueChanged<bool> onChanged;
 
-  const _ChannelsToggle({
+  const ChannelsModeToggle({
+    super.key,
     required this.isSixChannels,
     required this.onChanged,
   });

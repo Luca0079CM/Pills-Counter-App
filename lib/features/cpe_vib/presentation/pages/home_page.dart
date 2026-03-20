@@ -5,12 +5,12 @@ import '../theme/app_spacing.dart';
 import '../widgets/numeric_input_field.dart';
 import '../widgets/start_result_banner.dart';
 import '../widgets/unit_banner.dart';
+import '../widgets/channels_capsule_card.dart';
 import '../widgets/common/app_page_padding.dart';
 import '../widgets/common/app_primary_button.dart';
 import '../widgets/common/app_secondary_button.dart';
 import '../widgets/common/app_section_card.dart';
 import '../widgets/common/app_section_header.dart';
-import '../widgets/common/app_status_chip.dart';
 
 class HomePage extends StatelessWidget {
   final CpeVibController controller;
@@ -23,28 +23,6 @@ class HomePage extends StatelessWidget {
   });
 
 
-  Widget _buildLinkActionButton({
-    required bool isConnected,
-    required VoidCallback onPressed,
-  }) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(isConnected ? Icons.link_off : Icons.link, size: 17),
-      label: Text(isConnected ? 'Disattiva link' : 'Attiva link'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor:
-            isConnected ? const Color(0xFF8A6D1F) : AppColors.textSecondary,
-        backgroundColor:
-            isConnected ? const Color(0xFFFFF8E1) : const Color(0xFFEAF1F6),
-        side: BorderSide(
-          color: isConnected ? const Color(0xFFF3D9A4) : AppColors.border,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: const VisualDensity(horizontal: -1, vertical: -1),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,15 +128,6 @@ class HomePage extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Range consentito: da 1 a 999 pezzi',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -167,42 +136,12 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const AppSectionHeader(
-                    title: 'Comandi macchina',
-                    subtitle: 'Gestione collegamento e avvio conteggio',
-                    icon: Icons.play_circle_outline,
+                  ChannelsCapsuleContent(
+                    controller: controller,
+                    title: 'Canali capsule',
+                    subtitle: 'Pillole residue durante il conteggio',
                   ),
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      AppStatusChip(
-                        label: state.isConMode ? 'LINK-ON' : 'LINK-OFF',
-                        backgroundColor: state.isConMode
-                            ? const Color(0xFFFFF8E1)
-                            : const Color(0xFFEAF1F6),
-                        foregroundColor: state.isConMode
-                            ? const Color(0xFF8A6D1F)
-                            : AppColors.neutral,
-                        icon: state.isConMode ? Icons.link : Icons.link_off,
-                      ),
-                      _buildLinkActionButton(
-                        isConnected: state.isConMode,
-                        onPressed: controller.toggleConMode,
-                      ),
-                      if (state.timer != 0)
-                        AppStatusChip(
-                          label: state.isAutoLoop
-                              ? 'AUTO-START attivo (${state.timer}s)'
-                              : 'AUTO-START ${state.timer}s',
-                          backgroundColor: const Color(0xFFFFEBEE),
-                          foregroundColor: AppColors.danger,
-                          icon: Icons.timer,
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
                   AppPrimaryButton(
                     label: state.timer > 0 && state.isAutoLoop
                         ? 'STOP AUTO-START'
@@ -211,7 +150,7 @@ class HomePage extends StatelessWidget {
                         ? Icons.pause_circle
                         : Icons.play_arrow_rounded,
                     onPressed: controller.onStart,
-                    height: 70,
+                    height: 64,
                     backgroundColor: AppColors.danger,
                   ),
                 ],
