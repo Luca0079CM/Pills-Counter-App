@@ -122,17 +122,17 @@ class ConfigPage extends StatelessWidget {
                         ),
                       ),
                       NumericInputField(
-                        label: 'Vib. Tramolgia (%)',
+                        label: 'Vib. Tramoggia (%)',
                         controller: vibTazController,
                         onSubmitted: (_) => _validatePercentageField(
                           context,
                           controller: vibTazController,
-                          fieldLabel: 'Vibrazione Tramolgia (%)',
+                          fieldLabel: 'Vibrazione Tramoggia (%)',
                         ),
                         onTapOutside: (_) => _validatePercentageField(
                           context,
                           controller: vibTazController,
-                          fieldLabel: 'Vibrazione Tramolgia (%)',
+                          fieldLabel: 'Vibrazione Tramoggia (%)',
                         ),
                       ),
                       _buildFormDropdown(controller, state.params.formValue),

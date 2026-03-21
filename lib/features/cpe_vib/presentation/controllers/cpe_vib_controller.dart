@@ -278,7 +278,7 @@ class CpeVibController extends ChangeNotifier {
         continue;
       }
 
-      if (frame.startsWith('A') || frame.startsWith('X')) {
+      if ((frame.startsWith('A') || frame.startsWith('X')) && frame.length >= 10) {
         final startResult = _frameParser.parseStartResult(
           frame,
           currentUnita: _state.unita,
@@ -413,7 +413,9 @@ class CpeVibController extends ChangeNotifier {
       await sendAscii(_commandBuilder.configHandshake());
       final ok = await _waitImpostaAck(const Duration(milliseconds: 1500));
       if (ok) {
-        await sendAscii(_commandBuilder.pezzi(pezzi));
+        final payload = _commandBuilder.pezzi(pezzi);
+        _pendingImpostaEcho = 'A$payload*';
+        await sendAscii(payload);
       }
     } catch (_) {}
   }
