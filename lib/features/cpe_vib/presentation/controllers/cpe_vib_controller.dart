@@ -465,6 +465,17 @@ class CpeVibController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> _sendConfigSequence(List<String> payloads) async {
+    for (final payload in payloads) {
+      final ok = await _sendConfigCommand(payload);
+      if (!ok) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   Future<void> sendConfigSetRit() async {
     if (!validateRanges()) {
       _state = _state.copyWith(hasError: true);
