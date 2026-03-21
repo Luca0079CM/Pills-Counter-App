@@ -16,16 +16,16 @@ class CpeVibRepository {
   Future<void> saveSettings(AppSettings settings) =>
       settingsDatasource.save(settings);
 
-  Future<Map<int, bool>> connectTerms({
-    required String baseIp,
+  Future<bool> connect({
+    required String host,
     required int port,
-    required void Function(int terminal, dynamic data) onData,
-    required void Function(int terminal) onDone,
-    required void Function(int terminal, Object error) onError,
-    Duration timeout = const Duration(milliseconds: 800),
+    required void Function(dynamic data) onData,
+    required void Function() onDone,
+    required void Function(Object error) onError,
+    Duration timeout = const Duration(milliseconds: 900),
   }) {
-    return wifiDatasource.connectTerms(
-      baseIp: baseIp,
+    return wifiDatasource.connect(
+      host: host,
       port: port,
       onData: onData,
       onDone: onDone,
@@ -33,12 +33,6 @@ class CpeVibRepository {
       timeout: timeout,
     );
   }
-
-  void setActiveTerminal(int terminal) {
-    wifiDatasource.setActiveTerminal(terminal);
-  }
-
-  bool hasTerminal(int terminal) => wifiDatasource.hasTerminal(terminal);
 
   bool get isConnected => wifiDatasource.isConnected;
 

@@ -161,56 +161,43 @@ class CpeVibController extends ChangeNotifier {
   }
 
   Future<void> connect() async {
-    final host = _state.host.trim();
+    final host = _normalizeHost(_state.host);
     final port = int.tryParse(_state.port) ?? 5000;
-    final base = _deriveBaseFromHost(host);
 
-    _addLog('WiFi: connessione ai terminali $base.101/.102/.103 ...');
+    _addLog('WiFi: connessione a $host:$port ...');
 
-    final results = await _repository.connectTerms(
-      baseIp: base,
+    final connected = await _repository.connect(
+      host: host,
       port: port,
-      onData: (terminal, data) {
-        if (_state.activeTerminal == terminal) {
-          onBytes(Uint8List.fromList(data));
-        }
+      onData: (data) => onBytes(Uint8List.fromList(data)),
+      onDone: () {
+        _addLog('WiFi: connessione chiusa.');
+        _state = _state.copyWith(isConnected: false);
+        notifyListeners();
       },
-      onDone: (terminal) {
-        _addLog('WiFi $terminal: connessione chiusa.');
-        if (_state.activeTerminal == terminal) {
-          _state = _state.copyWith(isConnected: false);
-          notifyListeners();
-        }
-      },
-      onError: (terminal, error) {
-        _addLog('WiFi $terminal errore: $error');
+      onError: (error) {
+        _addLog('WiFi errore: $error');
       },
       timeout: const Duration(milliseconds: 900),
     );
 
-    final onTerms = [
-      for (final e in results.entries)
-        if (e.value) e.key,
-    ]..sort();
-
-    if (onTerms.isEmpty) {
-      _addLog('WiFi: nessun terminale raggiungibile.');
+    if (!connected) {
+      _addLog('WiFi: macchina non raggiungibile su $host:$port.');
       _state = _state.copyWith(
         isConnected: false,
         activeTerminal: null,
+        host: host,
       );
       notifyListeners();
       return;
     }
 
-    final active = onTerms.first;
-    _repository.setActiveTerminal(active);
-
     _state = _state.copyWith(
       isConnected: true,
-      activeTerminal: active,
+      activeTerminal: 1,
+      host: host,
     );
-    _addLog('WiFi: attivo TERM-$active.');
+    _addLog('WiFi: connesso alla macchina su $host:$port.');
     notifyListeners();
 
     try {
@@ -241,16 +228,9 @@ class CpeVibController extends ChangeNotifier {
   }
 
   Future<void> setActiveTerminal(int terminal) async {
-    if (_repository.hasTerminal(terminal)) {
-      _repository.setActiveTerminal(terminal);
-      _state = _state.copyWith(
-        activeTerminal: terminal,
-        isConnected: true,
-      );
-      _addLog('WiFi: attivo TERM-$terminal.');
-    } else {
-      _addLog('WiFi: TERM-$terminal non connesso.');
-      _state = _state.copyWith(activeTerminal: terminal);
+    _state = _state.copyWith(activeTerminal: terminal == 1 ? 1 : _state.activeTerminal);
+    if (terminal != 1) {
+      _addLog('WiFi: il refactor ora usa solo la macchina fissa su 192.168.1.101 (TERM-1).');
     }
     notifyListeners();
   }
@@ -420,7 +400,7 @@ class CpeVibController extends ChangeNotifier {
 
   Future<void> onImpostaPressed() async {
     final pezzi = _state.params.pezzi;
-    if (pezzi < 1 || pezzi > 500) {
+    if (pezzi < 1 || pezzi > 999) {
       _state = _state.copyWith(hasError: true);
       notifyListeners();
       return;
@@ -441,7 +421,7 @@ class CpeVibController extends ChangeNotifier {
   bool validateRanges() {
     final p = _state.params;
 
-    if (p.pezzi < 1 || p.pezzi > 500) return false;
+    if (p.pezzi < 1 || p.pezzi > 999) return false;
     if (![1, 2, 3].contains(p.formValue)) return false;
     if (p.seOff < 1 || p.seOff > 255) return false;
     if (p.seOn < 1 || p.seOn > 255) return false;
@@ -469,18 +449,14 @@ class CpeVibController extends ChangeNotifier {
     notifyListeners();
 
     final p = _state.params;
-    bool okAll = true;
+    var okAll = true;
 
-    // TRASMETTE I PARAMETRI IN SEQ.
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.pezzi(p.pezzi));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.form(p.formValue));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.seOn(p.seOn));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.seOff(p.seOff));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.vibCam(p.vibCam));
-    okAll = okAll && await _sendConfigCommand(_commandBuilder.vibTaz(p.vibTaz));
-
-    // nel vecchio flusso dopo la sequenza veniva richiesto l'aggiornamento
-    await sendAscii(_commandBuilder.refreshParams());
+    okAll = await _sendConfigCommand(_commandBuilder.pezzi(p.pezzi)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.form(p.formValue)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.seOn(p.seOn)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.seOff(p.seOff)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.vibCam(p.vibCam)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.vibTaz(p.vibTaz)) && okAll;
 
     _state = _state.copyWith(
       isParamBusy: false,
@@ -630,20 +606,21 @@ class CpeVibController extends ChangeNotifier {
     }
   }
 
-  String _deriveBaseFromHost(String host) {
+  String _normalizeHost(String host) {
     final trimmed = host.trim();
+    if (trimmed.isEmpty) return '192.168.1.101';
 
     final m4 = RegExp(r'^(\d+)\.(\d+)\.(\d+)\.(\d+)$').firstMatch(trimmed);
     if (m4 != null) {
-      return '${m4.group(1)}.${m4.group(2)}.${m4.group(3)}';
+      return trimmed;
     }
 
     final m3 = RegExp(r'^(\d+)\.(\d+)\.(\d+)$').firstMatch(trimmed);
     if (m3 != null) {
-      return m3.group(0)!;
+      return '${m3.group(0)}.101';
     }
 
-    return '192.168.1';
+    return trimmed;
   }
 
   void _addLog(String message) {
