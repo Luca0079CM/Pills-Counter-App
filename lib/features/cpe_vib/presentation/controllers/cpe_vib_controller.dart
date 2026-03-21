@@ -449,16 +449,14 @@ class CpeVibController extends ChangeNotifier {
     notifyListeners();
 
     final p = _state.params;
-    final commands = <String>[
-      _commandBuilder.pezzi(p.pezzi),
-      _commandBuilder.form(p.formValue),
-      _commandBuilder.seOn(p.seOn),
-      _commandBuilder.seOff(p.seOff),
-      _commandBuilder.vibCam(p.vibCam),
-      _commandBuilder.vibTaz(p.vibTaz),
-    ];
+    var okAll = true;
 
-    final okAll = await _sendConfigSequence(commands);
+    okAll = await _sendConfigCommand(_commandBuilder.pezzi(p.pezzi)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.form(p.formValue)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.seOn(p.seOn)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.seOff(p.seOff)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.vibCam(p.vibCam)) && okAll;
+    okAll = await _sendConfigCommand(_commandBuilder.vibTaz(p.vibTaz)) && okAll;
 
     _state = _state.copyWith(
       isParamBusy: false,
