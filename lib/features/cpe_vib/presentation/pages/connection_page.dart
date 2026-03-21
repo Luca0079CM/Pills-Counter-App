@@ -7,6 +7,7 @@ import '../widgets/common/app_primary_button.dart';
 import '../widgets/common/app_section_card.dart';
 import '../widgets/common/app_section_header.dart';
 import '../widgets/common/app_status_chip.dart';
+import '../widgets/common/app_secondary_button.dart';
 import '../widgets/terminal_selector.dart';
 import '../widgets/wifi_config_card.dart';
 
@@ -21,6 +22,21 @@ class ConnectionPage extends StatelessWidget {
     required this.hostController,
     required this.portController,
   });
+
+  Widget _buildLinkActionButton({
+    required bool isConMode,
+    required VoidCallback onPressed,
+  }) {
+    return AppSecondaryButton(
+      label: isConMode ? 'Disattiva link' : 'Attiva link',
+      icon: isConMode ? Icons.link_off : Icons.link,
+      onPressed: onPressed,
+      backgroundColor:
+          isConMode ? const Color(0xFFFFF8E1) : const Color(0xFFEAF1F6),
+      foregroundColor:
+          isConMode ? const Color(0xFF8A6D1F) : AppColors.textSecondary,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,12 +103,13 @@ class ConnectionPage extends StatelessWidget {
                   children: [
                     const AppSectionHeader(
                       title: 'Terminale attivo',
-                      subtitle: 'Seleziona il terminale da usare',
+                      subtitle: "La macchina usa sempre l'IP fisso 192.168.1.101",
                       icon: Icons.router,
                     ),
                     const SizedBox(height: 16),
                     TerminalSelector(
-                      activeTerminal: state.activeTerminal,
+                      activeTerminal: 1,
+                      enabledTerminals: const {1},
                       onSelected: controller.setActiveTerminal,
                     ),
                   ],
@@ -110,6 +127,52 @@ class ConnectionPage extends StatelessWidget {
               height: 58,
               backgroundColor:
               state.isConnected ? AppColors.success : AppColors.primary,
+            ),
+            const SizedBox(height: AppSpacing.section),
+            AppSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AppSectionHeader(
+                    title: 'Comandi macchina',
+                    subtitle: 'Gestione collegamento e avvio conteggio',
+                    icon: Icons.play_circle_outline,
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      AppStatusChip(
+                        label: state.isConMode ? 'LINK-ON' : 'LINK-OFF',
+                        backgroundColor: state.isConMode
+                            ? const Color(0xFFFFF8E1)
+                            : const Color(0xFFEAF1F6),
+                        foregroundColor: state.isConMode
+                            ? const Color(0xFF8A6D1F)
+                            : AppColors.neutral,
+                        icon: state.isConMode ? Icons.link : Icons.link_off,
+                      ),
+                      SizedBox(
+                        width: 190,
+                        child: _buildLinkActionButton(
+                          isConMode: state.isConMode,
+                          onPressed: controller.toggleConMode,
+                        ),
+                      ),
+                      if (state.timer != 0)
+                        AppStatusChip(
+                          label: state.isAutoLoop
+                              ? 'AUTO-START attivo (${state.timer}s)'
+                              : 'AUTO-START ${state.timer}s',
+                          backgroundColor: const Color(0xFFFFEBEE),
+                          foregroundColor: AppColors.danger,
+                          icon: Icons.timer,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),

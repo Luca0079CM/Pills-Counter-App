@@ -4,11 +4,13 @@ import '../theme/app_colors.dart';
 class TerminalSelector extends StatelessWidget {
   final int? activeTerminal;
   final ValueChanged<int> onSelected;
+  final Set<int> enabledTerminals;
 
   const TerminalSelector({
     super.key,
     required this.activeTerminal,
     required this.onSelected,
+    this.enabledTerminals = const {1, 2, 3},
   });
 
   @override
@@ -16,16 +18,20 @@ class TerminalSelector extends StatelessWidget {
     Widget chip(String label, int value) {
       final selected = activeTerminal == value;
 
+      final enabled = enabledTerminals.contains(value);
+
       return ChoiceChip(
         label: Text(label),
         selected: selected,
-        onSelected: (_) => onSelected(value),
+        onSelected: enabled ? (_) => onSelected(value) : null,
         showCheckmark: false,
         selectedColor: const Color(0xFFDCE7FF),
         backgroundColor: const Color(0xFFF4F6F8),
         side: BorderSide.none,
         labelStyle: TextStyle(
-          color: selected ? AppColors.primary : AppColors.textSecondary,
+          color: enabled
+              ? (selected ? AppColors.primary : AppColors.textSecondary)
+              : AppColors.textSecondary.withValues(alpha: 0.45),
           fontWeight: FontWeight.w700,
         ),
         shape: RoundedRectangleBorder(
