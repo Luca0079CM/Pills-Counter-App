@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
 import '../../data/datasources/settings_local_datasource.dart';
 import '../../data/datasources/wifi_datasource.dart';
@@ -560,20 +559,12 @@ class CpeVibController extends ChangeNotifier {
 
   Future<void> playAutoTickBeep() async {
     try {
-      FlutterRingtonePlayer().stop();
-      FlutterRingtonePlayer().play(
-        android: AndroidSounds.notification,
-        ios: IosSounds.glass,
-        looping: false,
-        volume: 1.0,
-        asAlarm: true,
-      );
-      return;
-    } catch (_) {
-      try {
-        await SystemSound.play(SystemSoundType.click);
-      } catch (_) {}
-    }
+      await SystemSound.play(SystemSoundType.click);
+    } catch (_) {}
+
+    try {
+      HapticFeedback.selectionClick();
+    } catch (_) {}
   }
 
   void _startDelaySignal() {
